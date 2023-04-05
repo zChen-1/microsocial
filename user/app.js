@@ -1,6 +1,49 @@
 const express = require("express");
 const bodyParser = require("body-parser");
+const sqlite3 = require("sqlite3").verbose();
 
+let db = new sqlite3.Database("./users.db", (err) => {
+  if (err) {
+    console.error(err.message);
+  }
+  console.log("Connected to the users database.");
+});
+
+// Create users table if not exists
+db.run(`CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL UNIQUE,
+        password TEXT NOT NULL
+    );`);
+
+// Helper function to execute SQLite queries
+function runQuery(query, params, callback) {
+  db.run(query, params, function (err) {
+    if (err) {
+      console.error(err.message);
+      callback(err, null);
+    } else {
+      console.log(`Query executed: ${query}`);
+      callback(null, this.lastID);
+    }
+  });
+}
+
+// Get user by id
+function getUserById(id, callback) {
+  db.get("SELECT * FROM users WHERE id = ?", [id], function (err, row) {
+    if (err) {
+      console.error(err.message);
+      callback(err, null);
+    } else if (!row) {
+      console.error(`User with id ${id} not found`);
+      callback({ message: `User with id ${id} not found` }, null);
+    } else {
+      console.log(`Retrieved user with id ${id}`);
+      callback(null, row);
+    }
+  });
+}
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
 
@@ -24,37 +67,49 @@ app.get("/", (req, res) => {
   res.send("Hello!");
 });
 
-// just data in variables for now
-var Users = [
-  { id: 1, name: "b", pass: "abc1", uri: "/user/1" },
-  { id: 2, name: "s", pass: "abc3", uri: "/user/2" },
-  { id: 3, name: "c", pass: "abc9", uri: "/user/3" },
-  { id: 4, name: "t", pass: "abc4", uri: "/user/4" },
-];
-
 // Basic api
 app.get("/users", (req, res) => {
-  // get list of users (use query params as needed to filter)
-  res.json(Users);
+  var users = [];
+  db.all("SELECT * FROM users", function (err, rows) {
+    if (err) {
+      console.error(err.message);
+      res.status(500);
+      return;
+    }
+    rows.forEach((row) => {
+      console.log({row});
+      user = { id: row.id, name: row.name };
+      user.uri = "/user/" + user.id;
+      users.push(user);
+    });
+    res.json({ users: users });
+  });
 });
 
 app.get("/user/:id", (req, res) => {
   const id = parseInt(req.params.id);
-  const user = Users.find((u) => u.id === id);
-  if (user) {
-    res.json(user);
-  } else {
-    res.status(404).json({ error: "User not found" });
-  }
+  var user = {};
+  db.get("SELECT * FROM users WHERE id = ?", [id], function (err, row) {
+    if (err) {
+      console.error(err.message);
+      res.status(500);
+      return;
+    }
+    if (row) {
+      user = { id: row.id, name: row.name };
+      user.uri = "/user/" + user.id;
+      res.json(user);
+    } else {
+      res.status(404).json({ error: "User not found" });
+    }
+  });
 });
 
 app.post("/users", (req, res) => {
   const user = req.body;
   console.log({ user: user });
 
-  user.id = Users.length + 1;
-  user.uri = "/user/" + user.id;
-  Users.push(user);
+  // insert into db here
 
   // ****** show how an API can use another API
   const url = "http://" + req.hostname + ":" + USER_PORT + "/user/" + user.id;
