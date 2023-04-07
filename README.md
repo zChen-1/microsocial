@@ -34,12 +34,9 @@ cd into your directory
 
 ### tweak common.js as needed
 Don't run yet
-### comment out all but base routes in app.js
-```app.use("/", require("./routes/base").router);
-// app.use("/", require("./routes/forward").router);
-// app.use("/", require("./routes/users").router);
-// app.use("/", require("./routes/user").router);
-```
+
+### delete all but base routes from your routes/ directory
+leave ```base.js``` there.
 
 ### tweak your base page in routes/base.js
 make it different
