@@ -126,14 +126,14 @@ router.put("/user/:id", (req, res) => {
     return;
   }
 
-  res.status(200).end();
+  res.redirect(`${id}`).end();
 });
       
 /**
  * @swagger
  * /user/{id}:
  *   patch:
- *     summary: Partially update User
+ *     summary: Update Selective User fields
  *     description: Replace any submitted fields for one User, by id.
  *     operationId: PatchUserById
  *     tags: [Users API]
@@ -168,12 +168,88 @@ router.put("/user/:id", (req, res) => {
 router.patch("/user/:id", (req, res) => {
   const id = parseInt(req.params.id);
   const updatedUser = req.body;
-  res.status(200).end();
+  try {
+
+    if ("name" in updatedUser) {
+      updatedName = updatedUser["name"] || "";
+      updatedName = updatedName.trim();
+      if (
+        updatedName.length < 1 ||
+        updatedName.length > 32 ||
+        updatedName.match(/[^A-Za-z0-9_.-]/)
+      ) {
+        res.statusMessage = "Invalid name";
+        res.status(400).end();
+        return;
+      }
+      const stmt = db.prepare(`UPDATE users SET name=? WHERE id=?`);
+  
+      info = { changes: 0 };
+      info = stmt.run([updatedName, id]);
+      if ( info.changes < 1 ) {
+        res.statusMessage = "No such user";
+        res.status(404).end();
+        return;
+      }
+    }
+  
+    if ("password" in updatedUser) {
+      updatedPass = updatedUser["password"] || "";
+      updatedUser.password = updatedPass.trim();
+      if (updatedPass.length < 4) {
+        res.statusMessage = "Invalid password";
+        res.status(400).end();
+        return;
+      }
+          const stmt = db.prepare(`UPDATE users SET password=? WHERE id=?`);
+  
+      info = { changes: 0 };
+      info = stmt.run([updatedPass, id]);
+      if ( info.changes < 1 ) {
+        res.statusMessage = "No such user";
+        res.status(404).end();
+        return;
+      }
+    }
+  
+  } catch (err) {
+    if (err.code === "SQLITE_CONSTRAINT_UNIQUE") {
+      res.statusMessage = "Account with name already exists";
+      res.status(400).end();
+      return;
+    }
+    console.log("update error: ", { err, info, user });
+    res.status(500).end();
+    return;
+  }
+
+  res.redirect(`${id}`);
 });
 
 /**
+/**
+ * @swagger
+ * /user/{id}:
+ *   delete:
+ *     summary: Delete User
+ *     description: Delete this user from the service
  *     operationId: DeleteUserById
- * 
+ *     tags: [Users API]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: Numeric ID of the user.
+ *         schema:
+ *            type: integer
+ *     responses:
+ *       204:
+ *         description: User Deleted
+ *       404:
+ *          description: Service/URI not found
+ *          examples: [ "Not Found", "No such user" ]
+ *       500:
+ *          description: Internal server error
  */
 router.delete("/user/:id", (req, res) => {
   const id = parseInt(req.params.id);
@@ -186,5 +262,5 @@ router.delete("/user/:id", (req, res) => {
     res.status(404).end();
     return;
   }
-  res.status(200).end();
+  res.status(204).end();
 });
