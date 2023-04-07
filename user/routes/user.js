@@ -16,7 +16,7 @@ const {db} = require("../db");
  *     parameters:
  *       - in: path
  *         name: id
- *         description: foo
+ *         description: user id
  *         required: true
  *         schema:
  *            $ref: '#/components/schemas/UserId'
@@ -73,13 +73,17 @@ router.get("/user/:id", (req, res) => {
  *              $ref: '#/components/schemas/UpdatingUser'
  *     responses:
  *       200:
- *         description: User Updated
+ *         description: User Updated (submitted fields only, but all fields returned)
+ *         content:
+ *          application/json:
+ *            schema:
+ *              $ref: '#/components/schemas/RetrievedUser'
  *       400:
  *          description: Invalid update. (Contents not acceptable)
  *       404:
  *          description: Service/URI not found
  *          examples: [ "Not Found", "No such user" ]
-      500:
+ *       500:
  *          description: Internal server error
  */
 router.put("/user/:id", (req, res) => {
@@ -122,6 +126,48 @@ router.put("/user/:id", (req, res) => {
     return;
   }
 
+  res.status(200).end();
+});
+      
+/**
+ * @swagger
+ * /user/{id}:
+ *   patch:
+ *     summary: Partially update User
+ *     description: Replace any submitted fields for one User, by id.
+ *     operationId: PatchUserById
+ *     tags: [Users API]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: Numeric ID of the user.
+ *         schema:
+ *            type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *          application/json:
+ *            schema:
+ *              $ref: '#/components/schemas/PatchingUser'
+ *     responses:
+ *       200:
+ *         description: User Updated (submitted fields only, but all fields returned)
+ *         content:
+ *          application/json:
+ *            schema:
+ *              $ref: '#/components/schemas/RetrievedUser'
+ *       400:
+ *          description: Invalid update. (Contents not acceptable)
+ *       404:
+ *          description: Service/URI not found
+ *          examples: [ "Not Found", "No such user" ]
+ *       500:
+ *          description: Internal server error
+ */
+router.patch("/user/:id", (req, res) => {
+  const id = parseInt(req.params.id);
+  const updatedUser = req.body;
   res.status(200).end();
 });
 
