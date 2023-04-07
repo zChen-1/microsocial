@@ -5,9 +5,12 @@ const swaggerUi = require("swagger-ui-express");
 const cookieParser = require("cookie-parser");
 const helmet = require("helmet");
 const cors = require("cors");
+const fs = require('fs');
+const path = require('path');
 
 const { uri, Services, MY_SERVICE } = require("./common");
 
+// >>>>>>>>> set up api docs route 
 const swaggerDefinition = {
   openapi: "3.0.0",
   info: {
@@ -48,11 +51,11 @@ const swaggerUIOptions = {
     displayOperationId: true,
     docExpansion: "none",
   },
-
 };
+// <<<<<<<<<< all the options for /docs. registered below.
 
 const app = express();
-app.set("title", "Microsocial Users API");
+app.set("title", `Microsocial ${MY_SERVICE} API`);
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb',extended: true }));
 app.use(express.static("public"));
@@ -63,18 +66,24 @@ app.use(
   swaggerUi.serve,
   swaggerUi.setup(swaggerSpec, swaggerUIOptions)
 );
+// if it's got JSON, don't allow invalid JSON
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
     console.error(err);
-    return res.status(400).send({ status: 404, message: err.message }); // Bad request
+    return res.status(400).send({ status: 400, message: err.message }); // Bad request
   }
   next();
 });
 
-app.use("/", require("./routes/base").router);
-app.use("/", require("./routes/forward").router);
-app.use("/", require("./routes/users").router);
-app.use("/", require("./routes/user").router);
+// include all routes from the routes/ dir: all js files.
+fs.readdir("./routes", (err, files) => { 
+  files.forEach(file => {
+    if (file.match(/[.]js$/)) {
+      console.log("including routes from:",file); 
+      app.use("/", require(`./routes/${ path.basename(file,'.js') }`).router);
+    } 
+  })
+});
 
 // app.enableCors({
 //   ...CorsConfig,
