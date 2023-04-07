@@ -2,9 +2,11 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const swaggerJSDoc = require("swagger-jsdoc");
 const swaggerUi = require("swagger-ui-express");
+const cookieParser = require("cookie-parser");
+const helmet = require("helmet");
+const cors = require("cors");
 
 const { uri, Services, MY_SERVICE } = require("./common");
-const { db } = require("./db");
 
 const swaggerDefinition = {
   openapi: "3.0.0",
@@ -51,9 +53,11 @@ const swaggerUIOptions = {
 
 const app = express();
 app.set("title", "Microsocial Users API");
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ limit: '50mb',extended: true }));
 app.use(express.static("public"));
+app.use(cookieParser())
+app.use(helmet())
 app.use(
   "/docs",
   swaggerUi.serve,
@@ -72,10 +76,6 @@ app.use("/", require("./routes/forward").router);
 app.use("/", require("./routes/users").router);
 app.use("/", require("./routes/user").router);
 
-// app.use(bodyParser.json({ limit: '50mb' }))
-// app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }))
-// app.use(cookieParser())
-// app.use(helmet())
 // app.enableCors({
 //   ...CorsConfig,
 //   origin: '*',

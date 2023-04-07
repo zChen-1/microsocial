@@ -16,6 +16,7 @@
  *       minimum: 1
  *       readOnly: true
  *            
+ * 
  *     User:
  *       type: object
  *       required:
@@ -47,6 +48,8 @@
  *       examples: [
  *         { id: 1, name: "alonzo", password: "lambda", uri: "http://lh:8/user/14" }
  *       ]
+ * 
+ * 
  *     RetrievedUser:
  *       type: object
  *       summary: User schema submitted when updating.
@@ -70,6 +73,8 @@
  *       examples: [
  *         { id: 1, name: "alonzo", uri: "http://lh:8/user/14" }
  *       ]
+ * 
+ * 
  *     CreatingUser:
  *       type: object
  *       required:
@@ -90,6 +95,8 @@
  *       examples: [
  *         { name: "alonzo", password: "lambda" }
  *       ]
+ * 
+ * 
  *     UpdatingUser:
  *       type: object
  *       summary: User schema submitted when updating.
@@ -111,5 +118,24 @@
  *       examples: [
  *         { name: "alonzo", password: "lambda" }
  *         ]
-*/
+ * 
+ * 
+ *     PatchingUser:
+ *       type: object
+ *       properties:
+ *         name:
+ *           type: string
+ *           minLength: 1
+ *           maxLength: 32
+ *           pattern: '^[A-Za-z0-9_.-]{1,32}$'
+ *           description: Username that they log in with. Must be unique
+ *         password:
+ *           type: string
+ *           minLength: 4
+ *           format: password
+ *           description: Guess. No leading or trailing spaces. Never returned by an API.
+ *       examples: [
+ *         { name: "alonzo", password: "lambda" }
+ *       ]
+ */
 
