@@ -1,81 +1,89 @@
 const express = require("express");
 const bodyParser = require("body-parser");
+const swaggerJSDoc = require("swagger-jsdoc");
+const swaggerUi = require("swagger-ui-express");
 
-const fetch = (...args) =>
-  import("node-fetch").then(({ default: fetch }) => fetch(...args));
+const { uri, Services, MY_SERVICE } = require("./common");
+const { db } = require("./db");
 
-const USER_PORT = 8000;
-const CONTENT_PORT = 8001;
-const RELATIONSHIP_PORT = 8002;
-const MESSAGING_PORT = 8003;
-const NOTIFICATIONS_PORT = 8004;
-const ANALYTICS_PORT = 8005;
+const swaggerDefinition = {
+  openapi: "3.0.0",
+  info: {
+    title: `${MY_SERVICE} Service API`,
+    description: "for Social!",
+    version: "0.1.0",
+  },
+  contact: {
+    name: "Bruce",
+    email: "bjmckenz@gmail.com",
+  },
+  servers: [
+    {
+      url: `http://localhost:${Services[MY_SERVICE].port}`,
+    },
+  ],
+};
 
-const MY_PORT = USER_PORT;
+const swaggerOptions = {
+  swaggerDefinition,
+  // Paths to files containing OpenAPI definitions
+  apis: ["../*.js", "../*/*.js", "../*/routes/*.js"],
+  servers: [
+    {
+      url: uri(),
+      description: "Development server",
+    },
+  ],
+};
+
+const swaggerSpec = swaggerJSDoc(swaggerOptions);
+
+const swaggerUIOptions = {
+  customSiteTitle: "API Doc",
+  explorer: true,
+  swaggerOptions: {
+    layout: "StandaloneLayout",
+    displayOperationId: true,
+    docExpansion: "none",
+  },
+
+};
 
 const app = express();
+app.set("title", "Microsocial Users API");
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
-
-// test path
-app.get("/", (req, res) => {
-  console.log({ base: req.hostname, query: req.query });
-  res.send("Hello!");
-});
-
-// just data in variables for now
-var Users = [
-  { id: 1, name: "b", pass: "abc1", uri: "/user/1" },
-  { id: 2, name: "s", pass: "abc3", uri: "/user/2" },
-  { id: 3, name: "c", pass: "abc9", uri: "/user/3" },
-  { id: 4, name: "t", pass: "abc4", uri: "/user/4" },
-];
-
-// Basic api
-app.get("/users", (req, res) => {
-  // get list of users (use query params as needed to filter)
-  res.json(Users);
-});
-
-app.get("/user/:id", (req, res) => {
-  const id = parseInt(req.params.id);
-  const user = Users.find((u) => u.id === id);
-  if (user) {
-    res.json(user);
-  } else {
-    res.status(404).json({ error: "User not found" });
+app.use(
+  "/docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, swaggerUIOptions)
+);
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
+    console.error(err);
+    return res.status(400).send({ status: 404, message: err.message }); // Bad request
   }
+  next();
 });
 
-app.post("/users", (req, res) => {
-  const user = req.body;
-  console.log({ user: user });
+app.use("/", require("./routes/base").router);
+app.use("/", require("./routes/forward").router);
+app.use("/", require("./routes/users").router);
+app.use("/", require("./routes/user").router);
 
-  user.id = Users.length + 1;
-  user.uri = "/user/" + user.id;
-  Users.push(user);
+// app.use(bodyParser.json({ limit: '50mb' }))
+// app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }))
+// app.use(cookieParser())
+// app.use(helmet())
+// app.enableCors({
+//   ...CorsConfig,
+//   origin: '*',
+//   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+// })
+// app.enableVersioning()
+// app.useGlobalInterceptors(new TimeoutInterceptor())
 
-  // ****** show how an API can use another API
-  const url = "http://" + req.hostname + ":" + USER_PORT + "/user/" + user.id;
-  const options = {
-    method: "GET",
-  };
-
-  fetch(url, options)
-    .then((xres) => xres.json())
-    .then((xjson) => {
-      // Note this in here for THIS example
-      res.json({ user: user, fromapi: xjson });
-      console.log("got response from API", xjson);
-    })
-    .catch((err) => console.error("error:" + err));
-
-  res.status(201);
-});
-
-// end api
-
-app.listen(MY_PORT, () => {
-  console.log("Listening on port " + MY_PORT + "...");
+server = app.listen(Services[MY_SERVICE].port, () => {
+  console.log("Listening on port " + Services[MY_SERVICE].port + "...");
 });
