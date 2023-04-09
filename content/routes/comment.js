@@ -1,5 +1,5 @@
 import express from 'express'
-import { db } from '../db.js'
+import { testComment, testCommentv2 } from '../controllers/comment.js'
 
 const router = express.Router()
 /**
@@ -12,18 +12,31 @@ const router = express.Router()
  *     tags: [Content API]
  *     responses:
  *       200:
- *         description: Boring Text
+ *         description: Success
  *         content:
  *           text/plain:
  *             schema:
  *               type: string
  */
-router.get('/', (req, res) => {
-    res.send('comment route')
-})
+router.get('/', testComment)
 
-router.get('/v2', (req, res) => {
-    res.send('comment route v2')
-})
+
+/**
+ * @swagger
+ * /comment/v2:
+ *   get:
+ *     summary: Comment Route v2!
+ *     description: Base page. Just says hello.
+ *     operationId: comment
+ *     tags: [Content API]
+ *     responses:
+ *       200:
+ *         description: Success
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ */
+router.get('/v2', testCommentv2)
 
 export default router

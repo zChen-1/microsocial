@@ -4,11 +4,11 @@ import cookieParser from 'cookie-parser'
 import cors from 'cors'
 import dotenv from "dotenv"
 import helmet from 'helmet'
-import posts from './routes/post.js'
-import comments from './routes/comment.js'
 import { testCreateTable, testTable, testDropTable } from './db.js'
 import { swaggerSpec, swaggerUIOptions } from './swagger-config/swagger.js'
 import swaggerUi from 'swagger-ui-express';
+import fs from 'fs';
+import path from 'path'
 
 dotenv.config()
 
@@ -31,9 +31,17 @@ app.get('/', (req, res) => {
     res.send("Hello")
 })
 
-// Service routes
-app.use('/post', posts)
-app.use('/comment', comments)
+// Get service routes from routes
+fs.readdir('./routes', (err, files) => {
+    files.forEach(async (file) => {
+        if (file.match(/[.]js$/)) {
+            const endpoint = path.basename(file, '.js')
+            const {default: route} = await import(`./routes/${file}`)
+            if(route)
+                app.use(`/${endpoint}`, route)
+        }
+    })
+})
 
 // Test db to see if INSERT, CREATE, AND GET work
 testCreateTable()

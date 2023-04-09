@@ -1,5 +1,5 @@
 import express from 'express'
-import { db } from '../db.js'
+import { testPost, testPostv2 } from '../controllers/post.js'
 
 const router = express.Router()
 
@@ -19,12 +19,24 @@ const router = express.Router()
  *             schema:
  *               type: string
  */
-router.get('/', (req, res) => {
-    res.send('post route')
-})
+router.get('/', testPost)
 
-router.get('/v2', (req, res) => {
-    res.send('post route v2')
-})
+/**
+ * @swagger
+ * /post/v2:
+ *   get:
+ *     summary: Post Route!
+ *     description: Base page. Just says post route.
+ *     operationId: post
+ *     tags: [Content API]
+ *     responses:
+ *       200:
+ *         description: Post route text
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ */
+router.get('/v2', testPostv2)
 
 export default router
