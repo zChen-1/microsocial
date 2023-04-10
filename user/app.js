@@ -4,9 +4,18 @@ const swaggerJSDoc = require("swagger-jsdoc");
 const swaggerUi = require("swagger-ui-express");
 const cookieParser = require("cookie-parser");
 const helmet = require("helmet");
-const cors = require("cors");
 const fs = require('fs');
 const path = require('path');
+const {
+  ReasonPhrases,
+  StatusCodes,
+  getReasonPhrase,
+  getStatusCode,
+} = require('http-status-codes');
+var livereload = require("livereload");
+var connectLiveReload = require("connect-livereload");
+var { expressjwt: jwt } = require("express-jwt");
+var stream = require('stream');
 
 const { uri, Services, MY_SERVICE } = require("./common");
 
@@ -54,13 +63,38 @@ const swaggerUIOptions = {
 };
 // <<<<<<<<<< all the options for /docs. registered below.
 
+// so that server restarts when any file changes
+const liveReloadServer = livereload.createServer();
+liveReloadServer.server.once("connection", () => {
+  setTimeout(() => {
+    liveReloadServer.refresh("/");
+  }, 100);
+});
+
+
+
+// App server and all the middleware...
 const app = express();
 app.set("title", `Microsocial ${MY_SERVICE} API`);
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb',extended: true }));
 app.use(express.static("public"));
 app.use(cookieParser())
+app.use(connectLiveReload());
 app.use(helmet())
+app.use(
+  jwt({
+    secret: "my-secret-garden",
+    algorithms: ["HS256"],
+  }).unless({ path: ["/", /^\/docs/, "/users", "^/user/", /^\/auth/, "/api-doc" ] })
+);
+app.use(function (err, req, res, next) {
+  if (err.name === "UnauthorizedError") {
+    res.status(StatusCodes.UNAUTHORIZED).send("Authorization Error");
+  } else {
+    next(err);
+  }
+});
 app.use(
   "/docs",
   swaggerUi.serve,
@@ -70,7 +104,7 @@ app.use(
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
     console.error(err);
-    return res.status(400).send({ status: 400, message: err.message }); // Bad request
+    return res.status(StatusCodes.BAD_REQUEST).send({ status: 400, message: err.message }); // Bad request
   }
   next();
 });
@@ -85,14 +119,40 @@ fs.readdir("./routes", (err, files) => {
   })
 });
 
-// app.enableCors({
-//   ...CorsConfig,
-//   origin: '*',
-//   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
-// })
-// app.enableVersioning()
-// app.useGlobalInterceptors(new TimeoutInterceptor())
 
-server = app.listen(Services[MY_SERVICE].port, () => {
-  console.log("Listening on port " + Services[MY_SERVICE].port + "...");
+/**
+ * @swagger
+ * /api-doc:
+ *   get:
+ *     summary: API Spec
+ *     description: Downloads the OAS 3.0 JSON spec for this API. Downloads as "api-doc.json"
+ *     operationId: apiDoc
+ *     tags: [Schema]
+ *     responses:
+ *       200:
+ *         description: File Download of API. File is named api-doc.json.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: string
+ */
+app.get('/api-doc', function(req, res){
+  const filename = "api-doc.json";
+  var fileContents = Buffer.from(JSON.stringify(swaggerSpec), "base64");
+  
+  var readStream = new stream.PassThrough();
+  readStream.end(fileContents);
+
+  res.set('Content-disposition', `attachment; filename=${filename}`);
+  res.set('Content-Type', 'application/octet-stream');
+
+  readStream.pipe(res);
 });
+
+
+// der main loop
+server = app.listen(Services[MY_SERVICE].port, () => {
+  console.log(`${ MY_SERVICE } service listening on port ${Services[MY_SERVICE].port }...`);
+});
+
+module.exports = app;

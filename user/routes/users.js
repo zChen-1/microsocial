@@ -1,3 +1,9 @@
+const {
+  ReasonPhrases,
+  StatusCodes,
+  getReasonPhrase,
+  getStatusCode,
+} = require('http-status-codes');
 var express = require('express');
 var router = express.Router();
 module.exports.router = router;
@@ -97,15 +103,15 @@ router.post("/users", (req, res) => {
     user.name.length > 32 ||
     user.name.match(/[^A-Za-z0-9_.-]/)
   ) {
-    res.statusMessage = "Invalid username";
-    res.status(400).end();
+    res.statusMessage = "Invalid Name";
+    res.status(StatusCodes.UNPROCESSABLE_CONTENT).end();
     return;
   }
 
   user.password = user.password.trim();
   if (user.password.length < 4) {
     res.statusMessage = "Invalid Password";
-    res.status(400).end();
+    res.status(StatusCodes.UNPROCESSABLE_CONTENT).end();
     return;
   }
 
@@ -117,11 +123,11 @@ router.post("/users", (req, res) => {
   } catch (err) {
     if (err.code === "SQLITE_CONSTRAINT_UNIQUE") {
       res.statusMessage = "Account already exists";
-      res.status(400).end();
+      res.status(StatusCodes.BAD_REQUEST).end();
       return;
     }
     console.log("insert error: ", { err, info, user });
-    res.status(500).end();
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).end();
     return;
   }
 
@@ -130,7 +136,8 @@ router.post("/users", (req, res) => {
   user.uri = uri(`/user/${user.id}`);
   delete user.password;
 
+  res.set('Location',user.uri);
   res.type('json');
   res.json(user);
-  res.status(201);
+  res.status(StatusCodes.CREATED);
 });

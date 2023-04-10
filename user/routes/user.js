@@ -1,3 +1,9 @@
+const {
+  ReasonPhrases,
+  StatusCodes,
+  getReasonPhrase,
+  getStatusCode,
+} = require('http-status-codes');
 var express = require('express');
 var router = express.Router();
 module.exports.router = router;
@@ -41,7 +47,7 @@ router.get("/user/:id", (req, res) => {
 
   if (users.length < 1) {
     res.statusMessage = "No such user";
-    res.status(404).end();
+    res.status(StatusCodes.NOT_FOUND).end();
     return;
   }
 
@@ -73,7 +79,7 @@ router.get("/user/:id", (req, res) => {
  *              $ref: '#/components/schemas/UpdatingUser'
  *     responses:
  *       200:
- *         description: User Updated (submitted fields only, but all fields returned)
+ *         description: User Updated (all fields)
  *         content:
  *          application/json:
  *            schema:
@@ -98,7 +104,7 @@ router.put("/user/:id", (req, res) => {
     updatedUser.name.match(/[^A-Za-z0-9_.-]/)
   ) {
     res.statusMessage = "Invalid name";
-    res.status(400).end();
+    res.status(StatusCodes.UNPROCESSABLE_CONTENT).end();
     return;
   }
 
@@ -106,23 +112,28 @@ router.put("/user/:id", (req, res) => {
   updatedUser.password = updatedPass.trim();
   if (updatedUser.password.length < 4) {
     res.statusMessage = "Invalid password";
-    res.status(400).end();
+    res.status(StatusCodes.UNPROCESSABLE_CONTENT).end();
     return;
   }
 
   const stmt = db.prepare(`UPDATE users SET name=?, password=? WHERE id=?`);
 
-  info = { changes: 0 };
   try {
     info = stmt.run([updatedUser.name, updatedUser.password, id]);
+    if (info.changes < 1) {
+      console.log("update error1: ", { err, info, user });
+      res.statusMessage = "Account update failed.";
+      res.status(StatusCodes.BAD_REQUEST).end();
+      return;
+    }
   } catch (err) {
     if (err.code === "SQLITE_CONSTRAINT_UNIQUE") {
       res.statusMessage = "Account with name already exists";
-      res.status(400).end();
+      res.status(StatusCodes.BAD_REQUEST).end();
       return;
     }
-    console.log("update error: ", { err, info, user });
-    res.status(500).end();
+    console.log("update error2: ", { err, info, user });
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).end();
     return;
   }
 
@@ -133,7 +144,7 @@ router.put("/user/:id", (req, res) => {
  * @swagger
  * /user/{id}:
  *   patch:
- *     summary: Update Selective User fields
+ *     summary: (Partially) update User fields
  *     description: Replace any submitted fields for one User, by id.
  *     operationId: PatchUserById
  *     tags: [Users API]
@@ -179,16 +190,15 @@ router.patch("/user/:id", (req, res) => {
         updatedName.match(/[^A-Za-z0-9_.-]/)
       ) {
         res.statusMessage = "Invalid name";
-        res.status(400).end();
+        res.status(StatusCodes.UNPROCESSABLE_CONTENT).end();
         return;
       }
       const stmt = db.prepare(`UPDATE users SET name=? WHERE id=?`);
   
-      info = { changes: 0 };
       info = stmt.run([updatedName, id]);
       if ( info.changes < 1 ) {
         res.statusMessage = "No such user";
-        res.status(404).end();
+        res.status(StatusCodes.NOT_FOUND).end();
         return;
       }
     }
@@ -198,16 +208,15 @@ router.patch("/user/:id", (req, res) => {
       updatedUser.password = updatedPass.trim();
       if (updatedPass.length < 4) {
         res.statusMessage = "Invalid password";
-        res.status(400).end();
+        res.status(StatusCodes.UNPROCESSABLE_CONTENT).end();
         return;
       }
-          const stmt = db.prepare(`UPDATE users SET password=? WHERE id=?`);
+      const stmt = db.prepare(`UPDATE users SET password=? WHERE id=?`);
   
-      info = { changes: 0 };
       info = stmt.run([updatedPass, id]);
       if ( info.changes < 1 ) {
         res.statusMessage = "No such user";
-        res.status(404).end();
+        res.status(StatusCodes.NOT_FOUND).end();
         return;
       }
     }
@@ -215,7 +224,7 @@ router.patch("/user/:id", (req, res) => {
   } catch (err) {
     if (err.code === "SQLITE_CONSTRAINT_UNIQUE") {
       res.statusMessage = "Account with name already exists";
-      res.status(400).end();
+      res.status(StatusCodes.BAD_REQUEST).end();
       return;
     }
     console.log("update error: ", { err, info, user });
@@ -255,12 +264,12 @@ router.delete("/user/:id", (req, res) => {
   const id = parseInt(req.params.id);
 
   const stmt = db.prepare("DELETE FROM users where id = ?");
+  
   info = stmt.run([id]);
-
   if (info.changes < 1) {
     res.statusMessage = "No such user";
-    res.status(404).end();
+    res.status(StatusCodes.NOT_FOUND).end();
     return;
   }
-  res.status(204).end();
+  res.status(StatusCodes.NO_CONTENT).end();
 });
