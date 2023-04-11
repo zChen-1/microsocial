@@ -1,3 +1,9 @@
+const {
+  ReasonPhrases,
+  StatusCodes,
+  getReasonPhrase,
+  getStatusCode,
+} = require('http-status-codes');
 var express = require('express');
 var router = express.Router();
 module.exports.router = router;
@@ -35,12 +41,12 @@ router.get("/forward/:id", async (req, res) => {
 
   const obj_uri = uri(`/user/${id}`, "Users");
   apiresult = await fetch(obj_uri, { method: "GET" });
-  if (apiresult.status != 200) {
+  if (apiresult.status != StatusCodes.OK) {
     console.error("api returned error:", {
       err: apiresult.status,
       message: apiresult.statusText,
     });
-    res.status(404).end();
+    res.status(StatusCodes.NOT_FOUND).end();
     return;
   }
 
@@ -50,7 +56,7 @@ router.get("/forward/:id", async (req, res) => {
 
   res.type("json");
   res.json({ apiuser: fetched_user });
-  res.status(200);
+  res.status(StatusCodes.OK);
 });
 
 

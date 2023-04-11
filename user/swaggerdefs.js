@@ -5,6 +5,8 @@
  *      description: Example code. Do not use this as a real service
  *    - name: Users API 
  *    - name: Content API
+ *    - name: Auth API
+ *    - name: Schema
  */
 
 /**
@@ -34,7 +36,7 @@
  *           minLength: 1
  *           maxLength: 32
  *           pattern: '^[A-Za-z0-9_.-]{1,32}$'
- *           description: Username that they log in with. Must be unique
+ *           description: Name that they log in with. Must be unique
  *         password:
  *           type: string
  *           minLength: 4
@@ -64,7 +66,7 @@
  *           minLength: 1
  *           maxLength: 32
  *           pattern: '^[A-Za-z0-9_.-]{1,32}$'
- *           description: Username that they log in with. Must be unique
+ *           description: Name that they log in with. Must be unique
  *         uri:
  *           type: string
  *           readOnly: true
@@ -86,7 +88,7 @@
  *           minLength: 1
  *           maxLength: 32
  *           pattern: '^[A-Za-z0-9_.-]{1,32}$'
- *           description: Username that they log in with. Must be unique
+ *           description: Name that they log in with. Must be unique
  *         password:
  *           type: string
  *           minLength: 4
@@ -109,7 +111,7 @@
  *           minLength: 1
  *           maxLength: 32
  *           pattern: '^[A-Za-z0-9_.-]{1,32}$'
- *           description: Username that they log in with. Must be unique
+ *           description: Name that they log in with. Must be unique
  *         password:
  *           type: string
  *           minLength: 4
@@ -128,7 +130,7 @@
  *           minLength: 1
  *           maxLength: 32
  *           pattern: '^[A-Za-z0-9_.-]{1,32}$'
- *           description: Username that they log in with. Must be unique
+ *           description: Name that they log in with. Must be unique
  *         password:
  *           type: string
  *           minLength: 4
