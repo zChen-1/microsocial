@@ -95,6 +95,22 @@ app.use(function (err, req, res, next) {
     next(err);
   }
 });
+/**
+ * @swagger
+ * /docs:
+ *   get:
+ *     summary: API Catalog as browseable site
+ *     description: Swagger's browser. Lets you try out all the APIs. Does not pass authentication token though!
+ *     operationId: apiCatalog
+ *     tags: [Schema]
+ *     responses:
+ *       200:
+ *         description: Active page of the catalog.
+ *         content:
+ *           text/html:
+ *             schema:
+ *               type: string
+ */
 app.use(
   "/docs",
   swaggerUi.serve,

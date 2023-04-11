@@ -57,7 +57,7 @@ router.post("/auth/login", (req, res) => {
  * /auth/login:
  *   get:
  *     summary: Sample login.html
- *     description: Base page. Just says hello.
+ *     description: Example of a login form that can serve as a login page. All it does is a form-submit with the key fields. **This is not an API file, it's an example frontend file**
  *     operationId: loginhtml
  *     tags: [Examples]
  *     responses:
