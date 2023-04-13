@@ -38,12 +38,9 @@ export const createDatabase = () => {
 
     // Indexing attribute
     db.exec(`CREATE INDEX IF NOT EXISTS idx_post_username ON posts (username);`)
-    
     db.exec(`CREATE INDEX IF NOT EXISTS idx_comment_post_id ON comments (post_id);`)
     db.exec(`CREATE INDEX IF NOT EXISTS idx_comment_username ON comments (username);`)
-
     db.exec(`CREATE INDEX IF NOT EXISTS idx_likes_post_id ON likesPost (post_id);`)
-
     db.exec(`CREATE INDEX IF NOT EXISTS idx_likes_comment_id ON likesComment (comment_id);`)
 
     console.log("Tables created")
