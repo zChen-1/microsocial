@@ -39,7 +39,7 @@ fs.readdir('./routes', (err, files) => {
             const endpoint = path.basename(file, '.js')
             const {default: route} = await import(`./routes/${file}`)
             if(route)
-                app.use(`/${endpoint}`, route)
+                app.use(`/content/${endpoint}`, route)
         }
     })
 })
