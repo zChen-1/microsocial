@@ -14,5 +14,6 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: 18
-      - run: cd content
-      - run: npm test
+      - run: | 
+          cd content
+          npm run test
