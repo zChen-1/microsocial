@@ -16,4 +16,5 @@ jobs:
           node-version: 18
       - run: | 
           cd content
+          npm install
           npm run test
