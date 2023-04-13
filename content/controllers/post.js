@@ -53,7 +53,7 @@ export const createPost = async(req, res) => {
     const q = db.prepare('INSERT INTO posts (username, title, date, tags, image, description) VALUES (?, ?, ?, ?, ?, ?)')
     q.run(username, title, currentDate.toISOString(), tags, image, description)
 
-    return res.status(200).json({ message: "success" })
+    return res.status(201).json({ message: "success" })
 }
 
 
