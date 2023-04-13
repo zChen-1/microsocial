@@ -15,5 +15,4 @@ jobs:
         with:
           node-version: 18
       - run: cd content
-      - run: npm ci
       - run: npm test
