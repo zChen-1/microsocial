@@ -3,6 +3,7 @@ name: Node Continuous Integration
 on:
   pull_request:
     branches: [ main ]
+  push:
 
 
 jobs:
@@ -12,7 +13,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
         with:
-          node-version: 12
+          node-version: 18
+      - run: cd content
       - run: npm ci
       - run: npm test
-      - run: npm run build
