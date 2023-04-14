@@ -12,7 +12,7 @@ afterAll(done => {
 
 export const conn = request(app)
 let post_id = 1
-
+let comment_id = 1
 describe("GET /content/posts", () => {
     it("Should return all posts", async () => {
         const res = await conn.get("/content/posts")
@@ -78,5 +78,44 @@ describe("GET /content/posts/:post_id", () => {
     it("Get a deleted post", async () => {
         const res = await conn.get(`/content/posts/${post_id}`)
         expect(res.statusCode).toBe(404)
+    })
+})
+
+describe("POST /content/comments", () => {
+    it("Post a comment", async () => {
+        const res = await conn.post(`/content/comments`).send({
+            post_id: 1,
+            username: "TEST",
+            body: "TEST"
+        })
+        expect(res.statusCode).toBe(201)
+        expect(res.body).toBeDefined()
+    })
+})
+
+describe("GET /content/comments/user/:username", () => {
+    const q = db.prepare(`SELECT (id) FROM comments WHERE username=? AND body=?`)
+    const { id } = q.get("TEST", "TEST")
+    comment_id = id
+    it("Get a comment by username", async () => {
+        const res = await conn.get(`/content/comments/user/TEST`)
+        expect(res.statusCode).toBe(200)
+        expect(res.body.result).toBeDefined()
+    })
+})
+
+describe("GET /content/comments/post/:post_id", () => {
+    it("Get a comment by post id", async () => {
+        const res = await conn.get(`/content/comments/user/1`)
+        expect(res.statusCode).toBe(200)
+        expect(res.body.result).toBeDefined()
+    })
+})
+
+
+describe("DELETE /content/comments/:comment_id", () => {
+    it("Delete a comment by id", async () => {
+        const res = await conn.delete(`/content/comments/${comment_id}`)
+        expect(res.statusCode).toBe(204)
     })
 })
