@@ -6,6 +6,7 @@ import dotenv from "dotenv"
 import helmet from 'helmet'
 import { testCreateTable, testTable, testDropTable } from './db.js'
 import { swaggerSpec, swaggerUIOptions } from './swagger-config/swagger.js'
+import { createDatabase } from './models/schema.js'
 import swaggerUi from 'swagger-ui-express';
 import fs from 'fs';
 import path from 'path'
@@ -38,7 +39,7 @@ fs.readdir('./routes', (err, files) => {
             const endpoint = path.basename(file, '.js')
             const {default: route} = await import(`./routes/${file}`)
             if(route)
-                app.use(`/${endpoint}`, route)
+                app.use(`/content/${endpoint}`, route)
         }
     })
 })
@@ -48,7 +49,11 @@ testCreateTable()
 testTable()
 testDropTable()
 
+// initialize Database
+createDatabase()
 
 app.listen(PORT, () => {
     console.log(`server started on ${PORT}`)
 })
+
+export default app
