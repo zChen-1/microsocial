@@ -51,7 +51,7 @@
  *         { id: 1, name: "alonzo", password: "lambda", uri: "http://lh:8/user/14" }
  *       ]
  * 
-*     LoginInfo:
+ *     LoginInfo:
  *       type: object
  *       required:
  *         - name
@@ -76,18 +76,33 @@
  *       type: object
  *       summary: JWT for authentication
  *       properties:
- *         id:
+ *         client_id:
  *           type: integer
  *           readOnly: true
  *           description: id of user
- *         accessToken:
+ *         access_token:
  *           type: string
  *           readOnly: true
  *           description: Opaque string. To be passed as in Authentication header as "Bearer <token>.
- *         refreshToken:
+ *         refresh_token:
  *           type: string
  *           readOnly: true
- *           description: Opaque string. To be passed when accessToken expires.
+ *           minLength: 36
+ *           maxLength: 36
+ *           description: Opaque string. To be passed when access_token expires.
+ *       
+ *     RefreshToken:
+ *       type: object
+ *       summary: A Refresh Token
+ *       required:
+ *         - refresh_token
+ *       properties:
+ *         refresh_token:
+ *           type: string
+ *           readOnly: true
+ *           minLength: 36
+ *           maxLength: 36
+ *           description: Opaque string. To be passed when access_token expires.
  *       
  *     RetrievedUser:
  *       type: object

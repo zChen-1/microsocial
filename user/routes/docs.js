@@ -1,8 +1,12 @@
 var express = require("express");
-const stream = require('stream');
-const swaggerJSDoc = require("swagger-jsdoc");
+const stream = require("stream");
+const yaml = require("js-yaml");
 const swaggerUi = require("swagger-ui-express");
-const { Services, MY_SERVICE, uri } = require("../common");
+const {
+  openapiSchemaToJsonSchema: toJsonSchema,
+} = require("@openapi-contrib/openapi-schema-to-json-schema");
+
+const { swaggerSpec } = require('../utils/schema');
 
 var router = express.Router();
 var app;
@@ -12,51 +16,6 @@ module.exports.appSetCallback = function (theApp) {
   app_setup();
 };
 module.exports.router = router;
-
-// >>>>>>>>> set up api docs route 
-const swaggerDefinition = {
-  openapi: "3.0.0",
-  info: {
-    title: `${MY_SERVICE} Service API`,
-    description: "for Social!",
-    version: "0.1.0",
-  },
-  contact: {
-    name: "Bruce",
-    email: "bjmckenz@gmail.com",
-  },
-  servers: [
-    {
-      url: `http://localhost:${Services[MY_SERVICE].port}`,
-    },
-  ],
-};
-
-const swaggerOptions = {
-  swaggerDefinition,
-  // Paths to files containing OpenAPI definitions
-  apis: ["../*.js", "../*/*.js", "../*/routes/*.js"],
-  servers: [
-    {
-      url: uri(),
-      description: "Development server",
-    },
-  ],
-};
-
-const swaggerSpec = swaggerJSDoc(swaggerOptions);
-
-const swaggerUIOptions = {
-  customSiteTitle: "API Doc",
-  explorer: true,
-  swaggerOptions: {
-    layout: "StandaloneLayout",
-    displayOperationId: true,
-    docExpansion: "none",
-  },
-};
-// <<<<<<<<<< all the options for API browser
-
 
 function app_setup() {
   /**
@@ -75,6 +34,16 @@ function app_setup() {
    *             schema:
    *               type: string
    */
+  const swaggerUIOptions = {
+    customSiteTitle: "API Doc",
+    explorer: true,
+    swaggerOptions: {
+      layout: "StandaloneLayout",
+      displayOperationId: true,
+      docExpansion: "none"
+    },
+  };
+  
   app.use(
     "/docs",
     swaggerUi.serve,
@@ -84,10 +53,10 @@ function app_setup() {
 
 /**
  * @swagger
- * /docs/api-doc:
+ * /schema/openapi/json:
  *   get:
  *     summary: API Spec
- *     description: Downloads the OAS 3.0 JSON spec for this API. Downloads as "api-doc.json"
+ *     description: Downloads the OAS 3.0 JSON spec for this API. Downloads as "swagger.json"
  *     operationId: apiDoc
  *     tags: [Schema]
  *     responses:
@@ -98,15 +67,43 @@ function app_setup() {
  *             schema:
  *               type: string
  */
-router.get('/docs/api-doc', function(req, res){
-  const filename = "api-doc.json";
+router.get("/schema/openapi/json", function (req, res) {
+  const filename = "swagger.json";
   var fileContents = Buffer.from(JSON.stringify(swaggerSpec), "base64");
-  
+
   var readStream = new stream.PassThrough();
   readStream.end(fileContents);
 
-  res.set('Content-disposition', `attachment; filename=${filename}`);
-  res.set('Content-Type', 'application/octet-stream');
+  res.set("Content-disposition", `attachment; filename=${filename}`);
+  res.set("Content-Type", "application/octet-stream");
+
+  readStream.pipe(res);
+});
+
+router.get("/schema/openapi/yaml", function (req, res) {
+  const filename = "swagger.yaml";
+  var fileContents = Buffer.from(yaml.dump(swaggerSpec), "utf-8");
+
+  var readStream = new stream.PassThrough();
+  readStream.end(fileContents);
+
+  res.set("Content-disposition", `attachment; filename=${filename}`);
+  res.set("Content-Type", "application/octet-stream");
+
+  readStream.pipe(res);
+});
+
+router.get("/schema/json-schema", function (req, res) {
+  const filename = "json-schema.json";
+  const schema = toJsonSchema(swaggerSpec);
+  console.log({ schema });
+  var fileContents = Buffer.from(JSON.stringify(schema), "utf-8");
+
+  var readStream = new stream.PassThrough();
+  readStream.end(fileContents);
+
+  res.set("Content-disposition", `attachment; filename=${filename}`);
+  res.set("Content-Type", "application/octet-stream");
 
   readStream.pipe(res);
 });

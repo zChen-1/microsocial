@@ -1,34 +1,34 @@
-const { StatusCodes } = require('http-status-codes');
-const path = require('path');
-const jsonwebtoken = require('jsonwebtoken');
+const { StatusCodes } = require("http-status-codes");
+const path = require("path");
+const jsonwebtoken = require("jsonwebtoken");
 var { expressjwt: jwt } = require("express-jwt");
 const { v4: uuidv4 } = require("uuid");
-const {uri, unprotectedPaths} = require("../common");
-const ms = require('ms');
-const dotenv = require('dotenv');
+const { uri, unprotectedPaths } = require("../common");
+const ms = require("ms");
+const dotenv = require("dotenv");
+var express = require("express");
+const { expressjwt } = require("express-jwt");
 
-const {db} = require("../db");
+const { validate } = require("../utils/schema-validation");
+const { db } = require("../db");
 
-var express = require('express');
-const { expressjwt } = require('express-jwt');
 var router = express.Router();
-
 dotenv.config();
+
 
 // we need the app to app.use(), so call back on module load
 var app;
-module.exports.appSetCallback = function(theApp) { app = theApp; app_setup(); }
+module.exports.appSetCallback = function (theApp) {
+  app = theApp;
+  app_setup();
+};
 module.exports.router = router;
 
-
 function generateAccessToken(payload) {
-  const theToken = jsonwebtoken.sign(
-      payload, 
-      process.env.TOKEN_SECRET, 
-      { 
-        expiresIn: process.env.ACCESS_TOKEN_EXPIRATION 
-      });
-  console.log({generateAccessToken: theToken, payload});
+  const theToken = jsonwebtoken.sign(payload, process.env.TOKEN_SECRET, {
+    expiresIn: process.env.ACCESS_TOKEN_EXPIRATION,
+  });
+  console.log({ generateAccessToken: theToken, payload });
   return theToken;
 }
 
@@ -37,24 +37,31 @@ const generateRefreshToken = function (payload, timeElapsed = 0) {
   let issuedAt = new Date();
   let expiresAt = new Date();
   expiresAt.setSeconds(
-      expiresAt.getSeconds() 
-      + ms(process.env.REFRESH_TOKEN_EXPIRATION)/1000 
-      - timeElapsed/1000);
+    expiresAt.getSeconds() +
+      ms(process.env.REFRESH_TOKEN_EXPIRATION) / 1000 -
+      timeElapsed / 1000
+  );
 
   let refreshToken = {
     ...payload,
-    token: uuidv4(),   // opaque id
+    token: uuidv4(), // opaque id
     issuedAt: issuedAt.toISOString(),
     expiresAt: expiresAt.toISOString(),
   };
 
   // save token id in db for revoking?
-  const stmt = db.prepare(`INSERT INTO refresh_tokens (user_id, refresh_token, issued, expires)
+  const stmt =
+    db.prepare(`INSERT INTO refresh_tokens (user_id, refresh_token, issued, expires)
                  VALUES (?, ?, ?, ?)`);
 
-  stmt.run([payload.id, refreshToken.token, refreshToken.issuedAt, refreshToken.expiresAt]);
+  stmt.run([
+    payload.id,
+    refreshToken.token,
+    refreshToken.issuedAt,
+    refreshToken.expiresAt,
+  ]);
 
-  console.log({generateRefreshToken: refreshToken, payload});
+  console.log({ generateRefreshToken: refreshToken, payload });
 
   return refreshToken.token;
 };
@@ -62,8 +69,6 @@ const generateRefreshToken = function (payload, timeElapsed = 0) {
 // const verifyRefreshTokenExpiration = (token) => {
 //   return token.expiryDate.getTime() < new Date().getTime();
 // };
-
-
 
 //*************
 // const catchAccessTokenError = (err, res) => {
@@ -91,7 +96,6 @@ const generateRefreshToken = function (payload, timeElapsed = 0) {
 //   });
 // };
 
-
 // const handleExpiredAccessToken = async (req, err) => {
 //   const token = req.headers.authorization
 //   console.log({ handleExpiredAccessToken: token});
@@ -105,8 +109,6 @@ const generateRefreshToken = function (payload, timeElapsed = 0) {
 //     //   },
 //   };
 
-
-
 function app_setup() {
   if (process.env.NO_AUTH) {
     return;
@@ -119,7 +121,7 @@ function app_setup() {
   );
   app.use(function (err, req, res, next) {
     if (err.name === "UnauthorizedError") {
-      if (err.inner.name === 'TokenExpiredError') {
+      if (err.inner.name === "TokenExpiredError") {
         res.status(StatusCodes.UNAUTHORIZED).send("Token Expired");
       } else {
         res.status(StatusCodes.UNAUTHORIZED).send("Authorization Error");
@@ -130,42 +132,81 @@ function app_setup() {
   });
 }
 
-
-// post /auth/token
-// -- req - refreshToken
-// -- 200 resp - (rotated) refreshToken, (new) accessToken
-// -- 403 resp - refresh expired or invalid. sign in again
+/**
+ * @swagger
+ * /auth/token:
+ *   post:
+ *     summary: Request a refreshed token
+ *     description: Given a valid (non-expired) refresh token, prepare and return a new access token and refresh token
+ *     operationId: refreshToken
+ *     tags: [Auth API]
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           required: true
+ *           schema:
+ *              $ref: '#/components/schemas/LoginToken'
+ *     responses:
+ *       200:
+ *         description: Login Succeeded; Token created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/LoginToken'
+ *       403:
+ *         description: Login Required
+ */
 router.post("/auth/token", async (req, res) => {
-  const {grant_type, client_id, refresh_token} = req.body;
+  const { grant_type, client_id, refresh_token } = req.body;
 
-  console.log({grant_type, client_id, refresh_token});
+  console.log({ grant_type, client_id, refresh_token });
 
-  const stmt = db.prepare("SELECT id, user_id, issued, expires FROM refresh_tokens WHERE refresh_token = ?");
+  const errors = validate.RefreshToken( {refresh_token },"{body}");
+  if (errors.length) {
+    console.log(
+      "No/bad-format refresh token submitted",
+      refresh_token
+    );
+    res.statusMessage = "Login required";
+    res.status(StatusCodes.UNAUTHORIZED).end();
+    return;
+  }
+
+  const stmt = db.prepare(
+    "SELECT id, user_id, issued, expires FROM refresh_tokens WHERE refresh_token = ?"
+  );
   tokens = stmt.all(refresh_token);
   if (tokens.length == 0) {
-    console.log("Nonexistent (revoked?) refresh token submitted",refresh_token);
+    console.log(
+      "Nonexistent (revoked?) refresh token submitted",
+      refresh_token
+    );
     res.statusMessage = "Login required";
     res.status(StatusCodes.UNAUTHORIZED).end();
     return;
   }
   token = tokens[0];
-  const delete_token_stmt = db.prepare("DELETE FROM refresh_tokens WHERE id = ?");
+  const delete_token_stmt = db.prepare(
+    "DELETE FROM refresh_tokens WHERE id = ?"
+  );
   delete_token_stmt.run(token.id);
 
-
   if (new Date(token.expires_at).getTime() < new Date().getTime()) {
-    console.log("Expired refresh token submitted",refresh_token);
+    console.log("Expired refresh token submitted", refresh_token);
     res.statusMessage = "Login required";
     res.status(StatusCodes.UNAUTHORIZED).end();
     return;
   }
 
-  const accessToken = generateAccessToken({ id: client_id });
+  const access_token = generateAccessToken({ client_id });
   const timeSinceIssued = Date.now() - new Date(token.issued);
-  console.log({token,timeSinceIssued});
-  const refreshToken = generateRefreshToken({id: client_id }, timeElapsed = timeSinceIssued);
+  console.log({ token, timeSinceIssued });
+  const new_refresh_token = generateRefreshToken(
+    { client_id },
+    (timeElapsed = timeSinceIssued)
+  );
 
-  res.json({accessToken, refreshToken});
+  res.json({ access_token, refresh_token: new_refresh_token });
   res.status(StatusCodes.OK);
 });
 
@@ -177,14 +218,13 @@ router.post("/auth/token", async (req, res) => {
  *     description: Logs in a user by creating a expressjwt. Username and password matched against database. No checks for duplicate tokens or expired accounts.
  *     operationId: login
  *     tags: [Auth API]
-  *     parameters:
- *       - in: body
- *         name: login info
- *         description: name / password
- *         required: true
- *         schema:
- *            $ref: '#/components/schemas/LoginInfo'
-*     responses:
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           required: true
+ *           schema:
+ *              $ref: '#/components/schemas/LoginInfo'
+ *     responses:
  *       200:
  *         description: Login Succeeded; Token created
  *         content:
@@ -197,18 +237,25 @@ router.post("/auth/token", async (req, res) => {
 router.post("/auth/login", async (req, res) => {
   const login_info = req.body;
 
-  if (!('name' in login_info) || !('password' in login_info)) {
-    console.log("Login info without fields",{login_info});
+  const errors = validate.LoginInfo(login_info, "{body}");
+
+  if (errors.length != 0) {
+    res.json({ errors });
     res.statusMessage = "Bad login request";
     res.status(StatusCodes.BAD_REQUEST).end();
     return;
   }
 
-  const stmt = db.prepare('SELECT * FROM users WHERE name = ? AND password = ?');
+  //console.log({login_info});
+
+  const stmt = db.prepare(
+    "SELECT * FROM users WHERE name = ? AND password = ?"
+  );
   users = stmt.all([login_info.name, login_info.password]);
 
   if (users.length == 0) {
-    console.log("Failed login attempt",login_info);
+    console.log("Failed login attempt", login_info);
+    res.json([{ message: "Invalid login" }]);
     res.statusMessage = "Invalid login";
     res.status(StatusCodes.UNAUTHORIZED).end();
     return;
@@ -216,15 +263,22 @@ router.post("/auth/login", async (req, res) => {
 
   logged_in_user = users[0];
 
-  const delete_token_stmt = db.prepare("DELETE FROM refresh_tokens WHERE user_id = ?");
+  const delete_token_stmt = db.prepare(
+    "DELETE FROM refresh_tokens WHERE user_id = ?"
+  );
   delete_token_stmt.run(logged_in_user.id);
 
-  console.log("Successful login",{logged_in_user});
+  console.log("Successful login", { logged_in_user });
 
-  const accessToken = generateAccessToken({ id: logged_in_user.id });
-  const refreshToken = generateRefreshToken({id: logged_in_user.id });
+  const access_token = generateAccessToken({ client_id: logged_in_user.id });
+  const refresh_token = generateRefreshToken({ client_id: logged_in_user.id });
 
-  res.json({id: logged_in_user.id, accessToken, refreshToken, uri: uri(`/user/${logged_in_user.id}`)});
+  res.json({
+    id: logged_in_user.id,
+    access_token,
+    refresh_token,
+    uri: uri(`/user/${logged_in_user.id}`),
+  });
   res.status(StatusCodes.OK);
 });
 
@@ -248,4 +302,3 @@ router.get("/auth/login", (req, res) => {
   const filename = "login.html";
   res.sendFile(filename, { root: path.join(__dirname) });
 });
-
