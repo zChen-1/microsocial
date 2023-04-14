@@ -22,7 +22,8 @@ app.use(helmet())
 // if it's got JSON, don't allow invalid JSON
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === StatusCodes.BAD_REQUEST && "body" in err) {
-    console.error(err);
+    console.log("Invalid JSON Received");
+    //console.error(err);
     return res.status(StatusCodes.BAD_REQUEST).send({ status: StatusCodes.BAD_REQUEST, message: err.message });
   }
   next();

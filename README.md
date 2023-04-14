@@ -9,6 +9,13 @@ make a change, push to your fork, and file a PR (pull request) to this repo.
 
 Please make the services live in a simply named directory (e.g. "user").
 
+## Updates and changes 4/14
+
+### Use those schemas for input validation (so we don't write it manually)
+Take a look at ```user/routes/user.js``` and look for "validate(" To get this goodness, copy ```utils/schema.js, utils/schema-validation.js``` (you'll want to update ```docs.js``` too at least). Magic!
+
+This implements DRY (Don't Repeat Yourself) by only specifying validation in ONE place (the schemas). The code is shorter and cleaner and less likely to break.
+
 ## Updates and changes 4/13
 
 ### BUG FIXES
@@ -41,7 +48,6 @@ Imagine that we were accepting clients. Which service routes are open to non-use
 * Clean up common.js, make it a proper config file
 * move utils and app.js to a higher level so we don't duplicate them
 * better trapping of 500
-### Use those schemas for input validation (so we don't write it manually)
 ### finishing authentication
 
 ### Possibles
