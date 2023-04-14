@@ -104,14 +104,14 @@ router.post("/users", (req, res) => {
     user.name.match(/[^A-Za-z0-9_.-]/)
   ) {
     res.statusMessage = "Invalid Name";
-    res.status(StatusCodes.UNPROCESSABLE_CONTENT).end();
+    res.status(StatusCodes.UNPROCESSABLE_ENTITY).end();
     return;
   }
 
   user.password = user.password.trim();
   if (user.password.length < 4) {
     res.statusMessage = "Invalid Password";
-    res.status(StatusCodes.UNPROCESSABLE_CONTENT).end();
+    res.status(StatusCodes.UNPROCESSABLE_ENTITY).end();
     return;
   }
 

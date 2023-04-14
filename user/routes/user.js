@@ -104,7 +104,7 @@ router.put("/user/:id", (req, res) => {
     updatedUser.name.match(/[^A-Za-z0-9_.-]/)
   ) {
     res.statusMessage = "Invalid name";
-    res.status(StatusCodes.UNPROCESSABLE_CONTENT).end();
+    res.status(StatusCodes.UNPROCESSABLE_ENTITY).end();
     return;
   }
 
@@ -112,7 +112,7 @@ router.put("/user/:id", (req, res) => {
   updatedUser.password = updatedPass.trim();
   if (updatedUser.password.length < 4) {
     res.statusMessage = "Invalid password";
-    res.status(StatusCodes.UNPROCESSABLE_CONTENT).end();
+    res.status(StatusCodes.UNPROCESSABLE_ENTITY).end();
     return;
   }
 
@@ -181,47 +181,49 @@ router.patch("/user/:id", (req, res) => {
   const updatedUser = req.body;
   try {
 
+    updateClauses = [];
+    updateParams = [];
+
     if ("name" in updatedUser) {
       updatedName = updatedUser["name"] || "";
       updatedName = updatedName.trim();
+      updateClause.push("name = ?");
+      updateParams.push(updatedName);
+
       if (
         updatedName.length < 1 ||
         updatedName.length > 32 ||
         updatedName.match(/[^A-Za-z0-9_.-]/)
       ) {
         res.statusMessage = "Invalid name";
-        res.status(StatusCodes.UNPROCESSABLE_CONTENT).end();
-        return;
-      }
-      const stmt = db.prepare(`UPDATE users SET name=? WHERE id=?`);
-  
-      info = stmt.run([updatedName, id]);
-      if ( info.changes < 1 ) {
-        res.statusMessage = "No such user";
-        res.status(StatusCodes.NOT_FOUND).end();
+        res.status(StatusCodes.UNPROCESSABLE_ENTITY).end();
         return;
       }
     }
   
     if ("password" in updatedUser) {
       updatedPass = updatedUser["password"] || "";
-      updatedUser.password = updatedPass.trim();
+      updatedPass = updatedPass.trim();
+      updateClause.push("password = ?");
+      updateParams.push(updatedPass);
+
       if (updatedPass.length < 4) {
         res.statusMessage = "Invalid password";
-        res.status(StatusCodes.UNPROCESSABLE_CONTENT).end();
+        res.status(StatusCodes.UNPROCESSABLE_ENTITY).end();
         return;
       }
-      const stmt = db.prepare(`UPDATE users SET password=? WHERE id=?`);
+
+      const stmt = db.prepare(`UPDATE users SET ${ updateClauses.join(', ') } WHERE id=?`);
   
-      info = stmt.run([updatedPass, id]);
+      info = stmt.run([...updateParams, id]);
       if ( info.changes < 1 ) {
-        res.statusMessage = "No such user";
+        res.statusMessage = "No such user/Error";
         res.status(StatusCodes.NOT_FOUND).end();
         return;
       }
     }
-  
-  } catch (err) {
+
+   } catch (err) {
     if (err.code === "SQLITE_CONSTRAINT_UNIQUE") {
       res.statusMessage = "Account with name already exists";
       res.status(StatusCodes.BAD_REQUEST).end();

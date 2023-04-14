@@ -1,4 +1,6 @@
 
+const {paths} = require('./unprotectedPaths');
+
 // >>>>>>> Configure as needed
 const Services = {
   Users: { port: 8000 },
@@ -9,7 +11,7 @@ const Services = {
   Analytics: { port: 8005 },
 };
 
-const MY_SERVICE = "Users";
+const MY_SERVICE = "Users"; 
 // <<<<<<<<<<<<<
 
 /*
@@ -37,8 +39,28 @@ function uri(path = "", typ = MY_SERVICE) {
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
 
- 
+const unprotectedPaths = () =>
+    {
+      const usablePaths = [];
+      paths.forEach((spec) => {
+        if ('exact' in spec) {
+          usablePaths.push(spec.exact);
+        }
+        if ('regex' in spec) {
+          usablePaths.push(new RegExp(spec.regex));
+        }
+        if ('head' in spec) {
+          usablePaths.push(new RegExp(`^${spec.head}/`));
+        }
+      });
+      if (paths.length != usablePaths.length || paths.length == 0) {
+        console.log("Unexpected: expected unprotected paths; found 0 or wrong number");
+      }
+      return usablePaths;
+    };
+
 module.exports.Services = Services;
 module.exports.MY_SERVICE = MY_SERVICE;
 module.exports.uri = uri;
 module.exports.fetch = fetch;
+module.exports.unprotectedPaths = unprotectedPaths;
