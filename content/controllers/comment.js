@@ -1,4 +1,3 @@
-import { get } from "mongoose";
 import { db } from "../db.js";
 
 export const getAllComments = async (req, res) => {
@@ -76,6 +75,7 @@ export const getCommentsByPostId = async (req, res) => {
     const result = q.all(post_id)
     return res.status(200).json({ result: result })
 }
+
 
 export const getCommentById = async (req, res) => {
     const { comment_id } = req.params
