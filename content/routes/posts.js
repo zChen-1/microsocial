@@ -8,7 +8,6 @@ const router = express.Router()
  * /content/posts:
  *   get:
  *     summary: Get all Posts!
- *     description: Get all posts in database.
  *     tags: [Content API]
  *     responses:
  *       200:
@@ -21,7 +20,6 @@ router.get('/', getAllPosts)
  * /content/posts/{post_id}:
  *   get:
  *     summary: Get all Posts!
- *     description: Get a post by id
  *     parameters:
  *       - name: post_id
  *         in: path
@@ -40,7 +38,6 @@ router.get('/:post_id', getPostById)
  * /content/posts/user/{username}:
  *   get:
  *     summary: Get post by username!
- *     description: Get a post by a username
  *     parameters:
  *       - name: username
  *         in: path
@@ -59,7 +56,6 @@ router.get('/user/:username', getPostByUsername)
  * /content/posts:
  *   post:
  *     summary: Post a new post!
- *     description: Post a post.
  *     tags: [Content API]
  *     requestBody:
  *       required: true
@@ -91,7 +87,6 @@ router.post('/', createPost)
  * /content/posts/{post_id}:
  *   delete:
  *     summary: Get post by post_id!
- *     description: Get a post by a post_id
  *     parameters:
  *       - name: post_id
  *         in: path

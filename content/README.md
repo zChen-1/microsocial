@@ -32,3 +32,5 @@ npm run dev
 > Server will be running on http://localhost:8001/ 
 > 
 > For UI documentation go to http://localhost:8001/docs
+>
+> When sending an image to `POST /content/posts` convert the image to Base64 string
