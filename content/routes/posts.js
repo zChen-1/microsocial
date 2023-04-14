@@ -108,7 +108,7 @@ router.delete('/:post_id', deletePostById)
  *     description: Post a post.
  *     tags: [Content API]
  *     requestBody:
- *       required: ture
+ *       required: true
  *       content:
  *         application/json:
  *           schema:
