@@ -51,7 +51,44 @@
  *         { id: 1, name: "alonzo", password: "lambda", uri: "http://lh:8/user/14" }
  *       ]
  * 
+*     LoginInfo:
+ *       type: object
+ *       required:
+ *         - name
+ *         - password
+ *       properties:
+ *         name:
+ *           type: string
+ *           minLength: 1
+ *           maxLength: 32
+ *           pattern: '^[A-Za-z0-9_.-]{1,32}$'
+ *           description: Name that they log in with.
+ *         password:
+ *           type: string
+ *           minLength: 4
+ *           format: '^[^ ]{4,}$'
+ *           description: No leading or trailing spaces.
+ *       examples: [
+ *         { name: "alonzo", password: "lambda" }
+ *       ]
  * 
+ *     LoginToken:
+ *       type: object
+ *       summary: JWT for authentication
+ *       properties:
+ *         id:
+ *           type: integer
+ *           readOnly: true
+ *           description: id of user
+ *         accessToken:
+ *           type: string
+ *           readOnly: true
+ *           description: Opaque string. To be passed as in Authentication header as "Bearer <token>.
+ *         refreshToken:
+ *           type: string
+ *           readOnly: true
+ *           description: Opaque string. To be passed when accessToken expires.
+ *       
  *     RetrievedUser:
  *       type: object
  *       summary: User schema submitted when updating.
