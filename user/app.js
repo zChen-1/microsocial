@@ -18,7 +18,6 @@ app.use(bodyParser.urlencoded({ limit: '50mb',extended: true }));
 app.use(cookieParser())
 app.use(helmet())
 
-  jwt({
 
 // if it's got JSON, don't allow invalid JSON
 app.use((err, req, res, next) => {
