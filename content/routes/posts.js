@@ -104,8 +104,7 @@ router.delete('/:post_id', deletePostById)
  * @swagger
  * /content/posts:
  *   put:
- *     summary: Post a new post!
- *     description: Post a post.
+ *     summary: Update a post!
  *     tags: [Content API]
  *     requestBody:
  *       required: true
