@@ -1,10 +1,10 @@
 import Database from "better-sqlite3";
 
-export const db = new Database('./contents.db')
+export const db = new Database('./notification.db')
 
 // TEST FUNCTIONS
 export const testCreateTable = () => {
-    const db = new Database('./contents.db')
+    const db = new Database('./notification.db')
     db.exec(`CREATE TABLE IF NOT EXISTS tests (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         body VARCHAR
@@ -12,7 +12,7 @@ export const testCreateTable = () => {
 }
 
 export const testTable = () => {
-    const db = new Database('./contents.db')
+    const db = new Database('./notification.db')
     const q = db.prepare('INSERT INTO tests (body) VALUES (?)')
     q.run('This is a test')
 
