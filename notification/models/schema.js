@@ -15,6 +15,7 @@ export const createDatabase = () => {
         username TEXT NOT NULL,
         notification_id TEXT NOT NULL
     );`);
+import { db } from "../db.js";
 
     console.log("Tables created")
 }
