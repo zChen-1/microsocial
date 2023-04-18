@@ -1,4 +1,11 @@
 import { db } from "../db.js";
+import Ajv, { ValidationError } from 'ajv';
+import { Comment, UpdateComment } from "../models/schema-validation.js";
+
+
+const ajv = new Ajv({allErrors: true})
+const commentValidate = ajv.compile(Comment)
+const updateCommentValidate = ajv.compile(UpdateComment)
 
 export const getAllComments = async (req, res) => {
     const q = db.prepare('SELECT * FROM comments')
@@ -10,10 +17,13 @@ export const getAllComments = async (req, res) => {
 
 
 export const addComment = async(req, res) => {
+    if(!commentValidate(req.body)) {
+        const error = new ValidationError(commentValidate.errors);
+        return res.status(400).json({ error })        
+    }
+
     const { post_id, username, body } = req.body
     const currentDate = new Date()
-    if(!post_id || !username || !body)
-        return res.status(400).json({ error: "Missing required data" })
     
     const q = db.prepare(`INSERT INTO comments (post_id, username, body, date) VALUES(?, ?, ?, ?);`)
     q.run(post_id, username, body, currentDate.toISOString())
@@ -23,9 +33,11 @@ export const addComment = async(req, res) => {
 
 
 export const updateComment = async(req, res) => {
+    if(!updateCommentValidate(req.body)) {
+        const error = new ValidationError(updateCommentValidate.errors);
+        return res.status(400).json({ error })         
+    }
     const { comment_id, body } = req.body
-    if(!comment_id || !body)
-        return res.status(400).json({ error: "Missing required data" })
 
     const q = db.prepare(`UPDATE comments SET body=? WHERE id=?`)
     const result = q.run(body, comment_id).changes

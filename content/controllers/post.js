@@ -1,5 +1,12 @@
 import { db } from "../db.js";
+import Ajv, { ValidationError } from 'ajv';
+import { Post, UpdatePost } from "../models/schema-validation.js";
 
+
+
+const ajv = new Ajv({ allErrors: true })
+const postValidate = ajv.compile(Post)
+const updatePostValidate = ajv.compile(UpdatePost)
 
 export const getAllPosts = async (req, res) => {
     const q = db.prepare('SELECT * FROM posts')
@@ -41,13 +48,14 @@ export const getPostByUsername = async (req, res) => {
 
 
 export const createPost = async(req, res) => {
+    if(!postValidate(req.body)) {
+        const error = new ValidationError(postValidate.errors);
+        return res.status(400).json({ error })
+    }
     const { username, title, description } = req.body
     const tags = req.body.tags || null
     const image = req.body.image || null
     const currentDate = new Date();
-
-    if(!username || !title || !description) 
-        return res.status(400).json({ error: "Invalid Data Input" })
 
     // Insert to database
     const q = db.prepare('INSERT INTO posts (username, title, date, tags, image, description) VALUES (?, ?, ?, ?, ?, ?)')
@@ -72,11 +80,15 @@ export const deletePostById = async(req, res) => {
 
 
 export const updatePostById = async(req, res) => {
+    if(!updatePostValidate(req.body)) {
+        const error = new ValidationError(updatePostValidate.errors);
+        return res.status(400).json({ error })        
+    }
     const { post_id, title, tags, image, description } = req.body
     const q = db.prepare(`UPDATE posts SET title=?, tags=?, image=?, description=? WHERE id=?`)
     const result = q.run(title, tags, image, description, post_id).changes
     if(result > 0)
         res.status(204).json({ message: "success" })
     else
-        res.status(400).json({ error: "Id not found" })
+        res.status(404).json({ error: "Id not found" })
 }
