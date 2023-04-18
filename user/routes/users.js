@@ -10,6 +10,7 @@ module.exports.router = router;
 
 const {uri} = require("../common");
 const {db} = require("../db");
+const { validate } = require("../utils/schema-validation");
 
 
 /**
@@ -31,8 +32,6 @@ const {db} = require("../db");
  *                   $ref: '#/components/schemas/RetrievedUser'
  *       400:
  *         description: Invalid Query
- *       500:
- *         description: Server Error
  */
 router.get("/users", (req, res) => {
   const stmt = db.prepare("SELECT id,name FROM users");
@@ -91,27 +90,15 @@ router.get("/users", (req, res) => {
  *          examples: [ "Invalid user name", 
  *                "Invalid password", 
  *                "User with that name already exists" ]
- *       500:
- *          description: Internal server error
  */
 router.post("/users", (req, res) => {
   const user = req.body;
 
-  user.name = user.name.trim();
-  if (
-    user.name.length < 1 ||
-    user.name.length > 32 ||
-    user.name.match(/[^A-Za-z0-9_.-]/)
-  ) {
-    res.statusMessage = "Invalid Name";
-    res.status(StatusCodes.UNPROCESSABLE_CONTENT).end();
-    return;
-  }
-
-  user.password = user.password.trim();
-  if (user.password.length < 4) {
-    res.statusMessage = "Invalid Password";
-    res.status(StatusCodes.UNPROCESSABLE_CONTENT).end();
+  errors = validate.CreatingUser(user,"{body}");
+  if (errors.length) {
+    res.json(errors);
+    res.statusMessage = "Invalid data";
+    res.status(StatusCodes.UNPROCESSABLE_ENTITY).end();
     return;
   }
 

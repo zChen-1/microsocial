@@ -9,6 +9,59 @@ make a change, push to your fork, and file a PR (pull request) to this repo.
 
 Please make the services live in a simply named directory (e.g. "user").
 
+## Updates and changes 4/14
+
+### Use those schemas for input validation (so we don't write it manually)
+Take a look at ```user/routes/user.js``` and look for "validate(" To get this goodness, copy ```utils/schema.js, utils/schema-validation.js``` (you'll want to update ```docs.js``` too at least). Magic!
+
+This implements DRY (Don't Repeat Yourself) by only specifying validation in ONE place (the schemas). The code is shorter and cleaner and less likely to break.
+
+## Updates and changes 4/13
+
+### BUG FIXES
+* Bad status code names fixed.
+
+### Test data for users present
+* You'll see a pattern for that in ```db.js```.
+
+### Authentication
+Temporarily turned off. Probably back on in a day or so.
+
+### Service split
+Split out /auth, /docs to different route/.js files. No change elsewhere (by you) required, I think.
+
+### watching for source changes
+You know how you save a file and forget to restart the service? Not any more! Start your services with ```npm run watch``` and it will auto-restart if any source file changes (except *.db).
+
+### Set up for pushing to production
+As a Best Practice, I've moved ```TOKEN_SECRET``` into ```.env```. This means that the development version uses what you see there, and the production version (say Heroku) can have secure variables set and never checked into Github. **This is an important pattern**.
+
+### Unprotected Paths
+Imagine that we were accepting clients. Which service routes are open to non-users (i.e. guests). **Put those paths in ```unprotectedPaths.js``` in your service** Note that the keys can be "exact", "regex", or "head".
+
+# FUTURE
+
+## Short-term plans
+### cursor/pagination of /users to show how to handle large sets
+### query/sort, same
+### Clean up
+* Clean up common.js, make it a proper config file
+* move utils and app.js to a higher level so we don't duplicate them
+* better trapping of 500
+### finishing authentication
+
+### Possibles
+* PATCH conflict management (requires DB change)
+* PATCH "upsert" (insert if not present)
+* problem+json for errors ('standard')
+* A sample front end (probably in Svelte)
+
+### Long Shots
+* Role-based access control (to show how it's done)
+* Add XML as an output
+
+# BEGINNING A SERVICE 
+
 ## Beginning your service (notes)
 
 ### Get User's service / working

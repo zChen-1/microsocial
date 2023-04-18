@@ -33,8 +33,6 @@ const {uri,fetch} = require("../common");
  *               $ref: '#/components/schemas/RetrievedUser'
  *       404:
  *          description: No such user
- *       500:
- *          description: Internal server error
  */
 router.get("/forward/:id", async (req, res) => {
   const id = parseInt(req.params.id);

@@ -8,4 +8,10 @@ db.exec(`CREATE TABLE IF NOT EXISTS users (
         name TEXT NOT NULL UNIQUE,
         password TEXT NOT NULL
     );`);
-
+db.exec(`CREATE TABLE IF NOT EXISTS refresh_tokens (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL UNIQUE,
+        refresh_token TEXT NOT NULL, 
+        issued TEXT,
+        expires TEXT
+    )`);

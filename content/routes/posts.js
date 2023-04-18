@@ -1,5 +1,5 @@
 import express from 'express'
-import { createPost, getAllPosts, getPostById, getPostByUsername } from '../controllers/post.js'
+import { createPost, deletePostById, getAllPosts, getPostById, getPostByUsername, updatePostById } from '../controllers/post.js'
 
 const router = express.Router()
 
@@ -8,7 +8,6 @@ const router = express.Router()
  * /content/posts:
  *   get:
  *     summary: Get all Posts!
- *     description: Get all posts in database.
  *     tags: [Content API]
  *     responses:
  *       200:
@@ -21,7 +20,6 @@ router.get('/', getAllPosts)
  * /content/posts/{post_id}:
  *   get:
  *     summary: Get all Posts!
- *     description: Get a post by id
  *     parameters:
  *       - name: post_id
  *         in: path
@@ -40,7 +38,6 @@ router.get('/:post_id', getPostById)
  * /content/posts/user/{username}:
  *   get:
  *     summary: Get post by username!
- *     description: Get a post by a username
  *     parameters:
  *       - name: username
  *         in: path
@@ -59,10 +56,9 @@ router.get('/user/:username', getPostByUsername)
  * /content/posts:
  *   post:
  *     summary: Post a new post!
- *     description: Post a post.
  *     tags: [Content API]
  *     requestBody:
- *       required: ture
+ *       required: true
  *       content:
  *         application/json:
  *           schema:
@@ -85,6 +81,56 @@ router.get('/user/:username', getPostByUsername)
  *         description: Invalid input data
  */
 router.post('/', createPost)
+
+/**
+ * @swagger
+ * /content/posts/{post_id}:
+ *   delete:
+ *     summary: Get post by post_id!
+ *     parameters:
+ *       - name: post_id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     tags: [Content API]
+ *     responses:
+ *       204:
+ *         description: Post route text
+ */
+router.delete('/:post_id', deletePostById)
+
+/**
+ * @swagger
+ * /content/posts:
+ *   put:
+ *     summary: Update a post!
+ *     tags: [Content API]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               post_id:
+ *                 type: integer
+ *               title:
+ *                 type: string
+ *               tags:
+ *                 type: string
+ *               image:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Post changed successfully
+ *       400:
+ *         description: Invalid input data
+ */
+router.put('/', updatePostById)
+
 
 
 export default router
