@@ -1,81 +1,51 @@
 const express = require("express");
 const bodyParser = require("body-parser");
+const cookieParser = require("cookie-parser");
+const helmet = require("helmet");
+const fs = require('fs');
+const path = require('path');
 
-const fetch = (...args) =>
-  import("node-fetch").then(({ default: fetch }) => fetch(...args));
+const { StatusCodes } = require('http-status-codes');
 
-const USER_PORT = 8000;
-const CONTENT_PORT = 8001;
-const RELATIONSHIP_PORT = 8002;
-const MESSAGING_PORT = 8003;
-const NOTIFICATIONS_PORT = 8004;
-const ANALYTICS_PORT = 8005;
+const { Services, MY_SERVICE } = require("./common");
 
-const MY_PORT = RELATIONSHIP_PORT;
 
+// App server, basic config, and all the middleware...
 const app = express();
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static("public"));
+app.set("title", `Microsocial ${MY_SERVICE} API`);
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ limit: '50mb',extended: true }));
+app.use(cookieParser())
+app.use(helmet())
 
-// test path
-app.get("/", (req, res) => {
-  console.log({ base: req.hostname, query: req.query });
-  res.send("Hello!");
-});
 
-// just data in variables for now
-var Users = [
-  { id: 1, name: "b", pass: "abc1", uri: "/user/1" },
-  { id: 2, name: "s", pass: "abc3", uri: "/user/2" },
-  { id: 3, name: "c", pass: "abc9", uri: "/user/3" },
-  { id: 4, name: "t", pass: "abc4", uri: "/user/4" },
-];
-
-// Basic api
-app.get("/users", (req, res) => {
-  // get list of users (use query params as needed to filter)
-  res.json(Users);
-});
-
-app.get("/user/:id", (req, res) => {
-  const id = parseInt(req.params.id);
-  const user = Users.find((u) => u.id === id);
-  if (user) {
-    res.json(user);
-  } else {
-    res.status(404).json({ error: "User not found" });
+// if it's got JSON, don't allow invalid JSON
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError && err.status === StatusCodes.BAD_REQUEST && "body" in err) {
+    console.log("Invalid JSON Received");
+    //console.error(err);
+    return res.status(StatusCodes.BAD_REQUEST).send({ status: StatusCodes.BAD_REQUEST, message: err.message });
   }
+  next();
 });
 
-app.post("/users", (req, res) => {
-  const user = req.body;
-  console.log({ user: user });
-
-  user.id = Users.length + 1;
-  user.uri = "/user/" + user.id;
-  Users.push(user);
-
-  // ****** show how an API can use another API
-  const url = "http://" + req.hostname + ":" + USER_PORT + "/user/" + user.id;
-  const options = {
-    method: "GET",
-  };
-
-  fetch(url, options)
-    .then((xres) => xres.json())
-    .then((xjson) => {
-      // Note this in here for THIS example
-      res.json({ user: user, fromapi: xjson });
-      console.log("got response from API", xjson);
-    })
-    .catch((err) => console.error("error:" + err));
-
-  res.status(201);
+// include all routes from the routes/ dir: all js files.
+fs.readdir("./routes", (err, files) => { 
+  files.forEach(file => {
+    if (file.match(/[.]js$/)) {
+      console.log("including routes from:",file); 
+      module_exports = require(`./routes/${ path.basename(file,'.js') }`);
+      if ('appSetCallback' in module_exports) {
+        module_exports.appSetCallback(app);
+      }
+      app.use("/", module_exports.router);
+    } 
+  })
 });
 
-// end api
-
-app.listen(MY_PORT, () => {
-  console.log("Listening on port " + MY_PORT + "...");
+// der main loop
+server = app.listen(Services[MY_SERVICE].port, () => {
+  console.log(`${ MY_SERVICE } service listening on port ${Services[MY_SERVICE].port }...`);
 });
+
+module.exports = app;
