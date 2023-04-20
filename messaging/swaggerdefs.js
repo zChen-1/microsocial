@@ -9,6 +9,25 @@
  *    - name: Schema
  */
 
+/*
+db.exec(`CREATE TABLE IF NOT EXISTS messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        thread INTEGER NOT NULL,
+        author INTEGER NOT NULL,
+        content TEXT NOT NULL,
+        timestamp INTEGER NOT NULL,
+        lastedit INTEGER NOT NULL,
+        read BOOL
+    );`);
+
+db.exec(`CREATE TABLE IF NOT EXISTS threads (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_a INTEGER NOT NULL,
+        user_b INTEGER NOT NULL
+    );`);
+*/
+
+
 /**
  * @swagger
  * components:
@@ -17,127 +36,65 @@
  *       type: integer
  *       minimum: 1
  *       readOnly: true
- *            
- * 
- *     User:
+ *
+ *     thread:
  *       type: object
- *       required:
- *         - id
- *         - name
- *         - password
  *       properties:
  *         id:
  *           type: integer
  *           minimum: 1
  *           readOnly: true
- *           description: The auto-generated id of the User. Will be unique.
- *         name:
- *           type: string
- *           minLength: 1
- *           maxLength: 32
- *           pattern: '^[A-Za-z0-9_.-]{1,32}$'
- *           description: Name that they log in with. Must be unique
- *         password:
- *           type: string
- *           minLength: 4
- *           format: password
- *           description: No leading or trailing spaces. Never returned by an API.
- *         uri:
- *           type: string
+ *           description: The auto-generated id of the Thread. Will be unique.
+ *         user_a:
+ *           type: integer
+ *           minimum: 1
  *           readOnly: true
- *           format: password
- *           description: URI to this object. Set by API at User creation.
- *       examples: [
- *         { id: 1, name: "alonzo", password: "lambda", uri: "http://lh:8/user/14" }
- *       ]
- * 
- * 
- *     RetrievedUser:
+ *           description: The UserId of a thread Participant.
+ *         user_b:
+ *           type: integer
+ *           minimum: 1
+ *           readOnly: true
+ *           description: The UserId of a thread Participant.
+ *
+ *
+ *     messages:
  *       type: object
- *       summary: User schema submitted when updating.
  *       properties:
  *         id:
  *           type: integer
  *           minimum: 1
  *           readOnly: true
- *           description: The auto-generated id of the book. Will be unique.
- *         name:
- *           type: string
- *           minLength: 1
- *           maxLength: 32
- *           pattern: '^[A-Za-z0-9_.-]{1,32}$'
- *           description: Name that they log in with. Must be unique
- *         uri:
- *           type: string
+ *           description: The auto-generated id of the Thread. Will be unique.
+ *         thread:
+ *           type: integer
+ *           minimum: 1
  *           readOnly: true
- *           format: password
- *           description: URI to this object. Set by endpoint at creation.
- *       examples: [
- *         { id: 1, name: "alonzo", uri: "http://lh:8/user/14" }
- *       ]
- * 
- * 
- *     CreatingUser:
- *       type: object
- *       required:
- *         - name
- *         - password
- *       properties:
- *         name:
+ *           description: The id of the thread object this message belongs to.
+ *         author:
+ *           type: integer
+ *           minimum: 1
+ *           readOnly: true
+ *           description: The id of the user who wrote this message.
+ *         content:
  *           type: string
- *           minLength: 1
- *           maxLength: 32
+ *           minimum: 1
  *           pattern: '^[A-Za-z0-9_.-]{1,32}$'
- *           description: Name that they log in with. Must be unique
- *         password:
- *           type: string
- *           minLength: 4
- *           format: password
- *           description: Guess. No leading or trailing spaces. Never returned by an API.
- *       examples: [
- *         { name: "alonzo", password: "lambda" }
- *       ]
- * 
- * 
- *     UpdatingUser:
- *       type: object
- *       summary: User schema submitted when updating.
- *       required:
- *         - name
- *         - password
- *       properties:
- *         name:
- *           type: string
- *           minLength: 1
- *           maxLength: 32
- *           pattern: '^[A-Za-z0-9_.-]{1,32}$'
- *           description: Name that they log in with. Must be unique
- *         password:
- *           type: string
- *           minLength: 4
- *           format: password
- *           description: Guess. No leading or trailing spaces. Never returned by an API.
- *       examples: [
- *         { name: "alonzo", password: "lambda" }
- *         ]
- * 
- * 
- *     PatchingUser:
- *       type: object
- *       properties:
- *         name:
- *           type: string
- *           minLength: 1
- *           maxLength: 32
- *           pattern: '^[A-Za-z0-9_.-]{1,32}$'
- *           description: Name that they log in with. Must be unique
- *         password:
- *           type: string
- *           minLength: 4
- *           format: password
- *           description: Guess. No leading or trailing spaces. Never returned by an API.
- *       examples: [
- *         { name: "alonzo", password: "lambda" }
- *       ]
- */
+ *           readOnly: false
+ *           description: The message contents the author wishes to communicate to the sendee.
+ *         timestamp:
+ *           type: integer
+ *           minimum: 1
+ *           readOnly true
+ *           description: The unix time generated Date.now() in the server on object creation. Used to manage message order in a thread's conversation.
+ *         lastedit:
+ *           type: integer
+ *           minimum: 1
+ *           readonly: false
+ *           description: The unix time generated by Date.now() in the server on last message update. By default equal to timestamp if no edits have occured.
+ *         read:
+ *           type: integer
+ *           minimum: 1
+ *           readonly: false
+ *           description: A integer boolean value managing if the reciever has seen the message. By default on object creation, this value is set to false.
+  */
 

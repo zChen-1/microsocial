@@ -15,24 +15,32 @@ const {db} = require("../db");
  * @swagger
  * /message/{id}:
  *   get:
- *     summary: Retrieve a single message
- *     description: Retrieve one message by id.
+ *     summary: Retrieve a single message by id
+ *     description: Retrieve one message by id
  *     operationId: GetMessageById
- *     tags: [messaging API]
+ *     tags: [Messaging API]
  *     parameters:
  *       - in: path
  *         name: id
  *         description: message id
  *         required: true
  *         schema:
- *            $ref: '#/components/schemas/messages.id'
+ *            $ref: '#/components/schemas/messages'
  *     responses:
  *       200:
  *         description: Message Data
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/RetrievedMessage'
+ *               $ref: '#/components/schemas/messages'
+ *             example:
+ *               {
+ *                 "id": 1,
+ *                 "author": 1,
+ *                 "timestamp": 1681943395437,
+ *                 "content": "Hello I am user 1.",
+ *                 "uri": "http://localhost:8003/message/1"
+ *               }
  *       404:
  *         description: No such Message
  *         examples: [ "Not Found", "No such message" ]
@@ -57,25 +65,23 @@ router.get("/message/:id", (req, res) => {
 /**
  * @swagger
  * /message/{id}:
- *   get:
+ *   delete:
  *     summary: Delete a single message
  *     description: Delete one message by id.
  *     operationId: DelMessageById
- *     tags: [messaging API]
+ *     tags: [Messaging API]
  *     parameters:
  *       - in: path
  *         name: id
  *         description: message id
  *         required: true
  *         schema:
- *            $ref: '#/components/schemas/messages.id'
+ *            $ref: '#/components/schemas/messages'
  *     responses:
  *       200:
- *         description: Message Data
+ *         description: The Message has been removed
  *         content:
  *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/RetrievedMessage'
  *       404:
  *         description: No such Message
  *         examples: [ "Not Found", "No such message" ]
@@ -97,8 +103,8 @@ router.delete("/message/:id", (req, res) => {
     return;
   }
 
-  messages = messages[0];
-  messages.uri = uri(`/messages/${message.id}`);
+  //messages = messages[0];
+  //messages.uri = uri(`/messages/${message.id}`);
   res.json(message);
 });
 /**
@@ -108,7 +114,7 @@ router.delete("/message/:id", (req, res) => {
  *     summary: update a messages
  *     description: Updates a message's content by message id and touches the lastedit date
  *     operationId: putMessageById
- *     tags: [messaging API]
+ *     tags: [Messaging API]
  *     parameters:
  *       - in: path
  *         name: id
