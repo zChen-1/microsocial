@@ -151,6 +151,8 @@ router.post("/messages/:thread_id", (req, res) => {
     return;
   }
 
-  message.uri = uri(`/message/${info.id}`);
+  console.log({info});
+
+  message.uri = uri(`/message/${info.lastInsertRowid}`);
   res.json(message);
 });
