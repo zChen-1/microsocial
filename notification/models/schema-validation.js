@@ -40,21 +40,3 @@ export const UpdateComment = {
     },   
     required: ['comment_id', 'body']     
 }
-
-export const LikePost = {
-    type: 'object',
-    properties: {
-        post_id: { type: 'integer' },
-        username: { type: 'string', minLength: 3 },
-    },   
-    required: ['post_id', 'username'] 
-}
-
-export const LikeComment = {
-    type: 'object',
-    properties: {
-        comment_id: { type: 'integer' },
-        username: { type: 'string', minLength: 3 },
-    },   
-    required: ['comment_id', 'username'] 
-}
