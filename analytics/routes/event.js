@@ -16,68 +16,68 @@ const { validate } = require("../utils/schema-validation");
 
 /**
  * @swagger
- * /user/{id}:
+ * /event/{id}:
  *   get:
- *     summary: Retrieve a User
- *     description: Retrieve one User by id.
- *     operationId: GetUserById
- *     tags: [Users API]
+ *     summary: Retrieve a Event
+ *     description: Retrieve one Event by id.
+ *     operationId: GetEventById
+ *     tags: [Events API]
  *     parameters:
  *       - in: path
  *         name: id
- *         description: user id
+ *         description: event id
  *         required: true
  *         schema:
- *            $ref: '#/components/schemas/UserId'
+ *            $ref: '#/components/schemas/EventId'
  *     responses:
  *       200:
- *         description: User Data
+ *         description: Event Data
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/RetrievedUser'
+ *               $ref: '#/components/schemas/RetrievedEvent'
  *       404:
- *         description: No such User
- *         examples: [ "Not Found", "No such user" ]
+ *         description: No such Event
+ *         examples: [ "Not Found", "No such event" ]
  */
-router.get("/user/:id", (req, res) => {
+router.get("/event/:id", (req, res) => {
   const id = parseInt(req.params.id);
 
-  errors = validate.UserId(id, "{id}");
+  errors = validate.EventId(id, "{id}");
   if (errors.length) {
     res.json(errors);
-    res.statusMessage = "No such user";
+    res.statusMessage = "No such event";
     res.status(StatusCodes.NOT_FOUND).end();
     return;
   }
 
-  const stmt = db.prepare("SELECT id,name FROM users where id = ?");
-  users = stmt.all([id]);
+  const stmt = db.prepare("SELECT id,name FROM events where id = ?");
+  events = stmt.all([id]);
 
-  if (users.length < 1) {
-    res.statusMessage = "No such user";
+  if (events.length < 1) {
+    res.statusMessage = "No such event";
     res.status(StatusCodes.NOT_FOUND).end();
     return;
   }
 
-  user = users[0];
-  user.uri = uri(`/user/${user.id}`);
-  res.json(user);
+  event = events[0];
+  event.uri = uri(`/event/${event.id}`);
+  res.json(event);
 });
 
 /**
  * @swagger
- * /user/{id}:
+ * /event/{id}:
  *   put:
- *     summary: Update User
- *     description: Replace all* fields for one User, by id.
- *     operationId: UpdateUserById
- *     tags: [Users API]
+ *     summary: Update Event
+ *     description: Replace all* fields for one Event, by id.
+ *     operationId: UpdateEventById
+ *     tags: [Events API]
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         description: Numeric ID of the user.
+ *         description: Numeric ID of the event.
  *         schema:
  *            type: integer
  *     requestBody:
@@ -85,34 +85,34 @@ router.get("/user/:id", (req, res) => {
  *       content:
  *          application/json:
  *            schema:
- *              $ref: '#/components/schemas/UpdatingUser'
+ *              $ref: '#/components/schemas/UpdatingEvent'
  *     responses:
  *       200:
- *         description: User Updated (all fields)
+ *         description: Event Updated (all fields)
  *         content:
  *          application/json:
  *            schema:
- *              $ref: '#/components/schemas/RetrievedUser'
+ *              $ref: '#/components/schemas/RetrievedEvent'
  *       400:
  *          description: Invalid update. (Contents not acceptable)
  *       404:
- *          description: No such User
- *          examples: [ "Not Found", "No such user" ]
+ *          description: No such Event
+ *          examples: [ "Not Found", "No such event" ]
  */
-router.put("/user/:id", (req, res) => {
+router.put("/event/:id", (req, res) => {
   const id = parseInt(req.params.id);
 
-  errors = validate.UserId(id, "{id}");
+  errors = validate.EventId(id, "{id}");
   if (errors.length) {
     res.json(errors);
-    res.statusMessage = "No such user";
+    res.statusMessage = "No such event";
     res.status(StatusCodes.NOT_FOUND).end();
     return;
   }
 
-  const updatedUser = req.body;
+  const updatedEvent = req.body;
 
-  errors = validate.UpdatingUser(updatedUser, "{body}");
+  errors = validate.UpdatingEvent(updatedEvent, "{body}");
   if (errors.length) {
     res.json(errors);
     res.statusMessage = "Invalid update";
@@ -120,12 +120,12 @@ router.put("/user/:id", (req, res) => {
     return;
   }
 
-  const stmt = db.prepare(`UPDATE users SET name=?, password=? WHERE id=?`);
+  const stmt = db.prepare(`UPDATE events SET name=?, password=? WHERE id=?`);
 
   try {
-    info = stmt.run([updatedUser.name, updatedUser.password, id]);
+    info = stmt.run([updatedEvent.name, updatedEvent.password, id]);
     if (info.changes < 1) {
-      console.log("update error1: ", { err, info, user });
+      console.log("update error1: ", { err, info, event });
       res.statusMessage = "Account update failed.";
       res.status(StatusCodes.BAD_REQUEST).end();
       return;
@@ -136,7 +136,7 @@ router.put("/user/:id", (req, res) => {
       res.status(StatusCodes.BAD_REQUEST).end();
       return;
     }
-    console.log("update error2: ", { err, info, user });
+    console.log("update error2: ", { err, info, event });
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).end();
     return;
   }
@@ -146,17 +146,17 @@ router.put("/user/:id", (req, res) => {
 
 /**
  * @swagger
- * /user/{id}:
+ * /event/{id}:
  *   patch:
- *     summary: (Partially) update User fields
- *     description: Replace any submitted fields for one User, by id.
- *     operationId: PatchUserById
- *     tags: [Users API]
+ *     summary: (Partially) update Event fields
+ *     description: Replace any submitted fields for one Event, by id.
+ *     operationId: PatchEventById
+ *     tags: [Events API]
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         description: Numeric ID of the user.
+ *         description: Numeric ID of the event.
  *         schema:
  *            type: integer
  *     requestBody:
@@ -164,34 +164,34 @@ router.put("/user/:id", (req, res) => {
  *       content:
  *          application/json:
  *            schema:
- *              $ref: '#/components/schemas/PatchingUser'
+ *              $ref: '#/components/schemas/PatchingEvent'
  *     responses:
  *       200:
- *         description: User Updated (submitted fields only, but all fields returned)
+ *         description: Event Updated (submitted fields only, but all fields returned)
  *         content:
  *          application/json:
  *            schema:
- *              $ref: '#/components/schemas/RetrievedUser'
+ *              $ref: '#/components/schemas/RetrievedEvent'
  *       400:
  *          description: Invalid update. (Contents not acceptable)
  *       404:
- *          description: User not found
- *          examples: [ "Not Found", "No such user" ]
+ *          description: Event not found
+ *          examples: [ "Not Found", "No such event" ]
  */
-router.patch("/user/:id", (req, res) => {
+router.patch("/event/:id", (req, res) => {
   const id = parseInt(req.params.id);
 
-  errors = validate.UserId(id, "{id}");
+  errors = validate.EventId(id, "{id}");
   if (errors.length) {
     res.json(errors);
-    res.statusMessage = "No such user";
+    res.statusMessage = "No such event";
     res.status(StatusCodes.NOT_FOUND).end();
     return;
   }
 
-  const updatedUser = req.body;
+  const updatedEvent = req.body;
 
-  errors = validate.PatchingUser(updatedUser, "{body}");
+  errors = validate.PatchingEvent(updatedEvent, "{body}");
   if (errors.length) {
     res.json(errors);
     res.statusMessage = "Invalid update";
@@ -204,23 +204,23 @@ router.patch("/user/:id", (req, res) => {
     updateClauses = [];
     updateParams = [];
 
-    if ("name" in updatedUser) {
+    if ("name" in updatedEvent) {
       updateClauses.push("name = ?");
-      updateParams.push(updatedUser.name);
+      updateParams.push(updatedEvent.name);
     }
 
-    if ("password" in updatedUser) {
+    if ("password" in updatedEvent) {
       updateClauses.push("password = ?");
-      updateParams.push(updatedUser.password);
+      updateParams.push(updatedEvent.password);
     }
 
     const stmt = db.prepare(
-      `UPDATE users SET ${updateClauses.join(", ")} WHERE id=?`
+      `UPDATE events SET ${updateClauses.join(", ")} WHERE id=?`
     );
 
     info = stmt.run([...updateParams, id]);
     if (info.changes < 1) {
-      res.statusMessage = "No such user/Error";
+      res.statusMessage = "No such event/Error";
       res.status(StatusCodes.NOT_FOUND).end();
       return;
     }
@@ -230,7 +230,7 @@ router.patch("/user/:id", (req, res) => {
       res.status(StatusCodes.BAD_REQUEST).end();
       return;
     }
-    console.log("update error: ", { err, updatedUser });
+    console.log("update error: ", { err, updatedEvent });
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).end();
     return;
   }
@@ -241,42 +241,42 @@ router.patch("/user/:id", (req, res) => {
 /**
 /**
  * @swagger
- * /user/{id}:
+ * /event/{id}:
  *   delete:
- *     summary: Delete User
- *     description: Delete this user from the service
- *     operationId: DeleteUserById
- *     tags: [Users API]
+ *     summary: Delete Event
+ *     description: Delete this event from the service
+ *     operationId: DeleteEventById
+ *     tags: [Events API]
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         description: Numeric ID of the user.
+ *         description: Numeric ID of the event.
  *         schema:
  *            type: integer
  *     responses:
  *       204:
- *         description: User Deleted
+ *         description: Event Deleted
  *       404:
- *          description: No such User
- *          examples: [ "Not Found", "No such user" ]
+ *          description: No such Event
+ *          examples: [ "Not Found", "No such event" ]
  */
-router.delete("/user/:id", (req, res) => {
+router.delete("/event/:id", (req, res) => {
   const id = parseInt(req.params.id);
 
-  errors = validate.UserId(id, "{id}");
+  errors = validate.EventId(id, "{id}");
   if (errors.length) {
     res.json(errors);
-    res.statusMessage = "No such user";
+    res.statusMessage = "No such event";
     res.status(StatusCodes.NOT_FOUND).end();
     return;
   }
 
-  const stmt = db.prepare("DELETE FROM users where id = ?");
+  const stmt = db.prepare("DELETE FROM events where id = ?");
 
   info = stmt.run([id]);
   if (info.changes < 1) {
-    res.statusMessage = "No such user";
+    res.statusMessage = "No such event";
     res.status(StatusCodes.NOT_FOUND).end();
     return;
   }
