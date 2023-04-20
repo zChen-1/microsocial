@@ -128,7 +128,7 @@ describe("GET /content/likes/post/:post_id", () => {
 })
 
 describe("GET /content/likes/post/:comment_id", () => {
-    it("Get a likes by post id", async () => {
+    it("Get a likes by comment id", async () => {
         const res = await conn.get(`/content/likes/comment/1`)
         expect(res.statusCode).toBe(200)
     })
