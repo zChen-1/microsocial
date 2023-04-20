@@ -135,7 +135,7 @@ router.post("/messages/:thread_id", (req, res) => {
   console.log("thread",message.thread);
   message.author = parseInt(req.body.author.trim());
   message.content = req.body.content.trim();
-  message.read = false;
+  message.read = 0;
   let current_time = Date.now();
   message.timestamp = current_time;
   message.lastedit = current_time;
