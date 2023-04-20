@@ -36,9 +36,8 @@ const {db} = require("../db");
  *         examples: [ "Not Found", "No messages available" ]
  */
 router.get("/messages", (req, res) => {
-  stmt=db.prepare(`SELECT * FROM messages`);
-  console.log(stmt);
-  let messages = stmt.all();
+  stmt=db.prepare(`SELECT * FROM messages ORDER BY thread, timestamp`);
+  let messages = stmt.all([]);
   console.log(messages);
 
   if (messages.length < 1) {
@@ -58,12 +57,13 @@ router.get("/messages", (req, res) => {
  *     summary: retrieve all messages 
  *     description: Retrieves all messages
  *     operationId: DelMessageById
- *     tags: [messaging API]
+ *     tags: [Messaging API]
  *     parameters:
  *       - in: path
  *         name: id
  *         description: message id
  *         required: true
+ *             schema: integer
  *     responses:
  *       200:
  *         description: Message Data
@@ -82,11 +82,11 @@ router.get("/messages/:thread_id", (req, res) => {
   }
   const stmt = db.prepare(`SELECT * FROM messages WHERE thread = ? ORDER BY timestamp`);//prepared statements do not like parameter passing
   console.log("id=",id);
-  let messages = stmt.all([""+id]);
+  let messages = stmt.all([id]);
   console.log({messages});
 
   if (messages.length < 1) {
-    res.statusMessage = "No such messages";
+    res.statusMessage = "No such threads";
     res.status(StatusCodes.NOT_FOUND).end();
     return;
   }
