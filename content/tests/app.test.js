@@ -119,3 +119,10 @@ describe("DELETE /content/comments/:comment_id", () => {
         expect(res.statusCode).toBe(204)
     })
 })
+
+describe("GET /content/likes/post/:post_id", () => {
+    it("Get a likes by post id", async () => {
+        const res = await conn.get(`/content/likes/post/1`)
+        expect(res.statusCode).toBe(200)
+    })
+})
