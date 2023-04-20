@@ -11,61 +11,78 @@ module.exports.router = router;
 const {uri} = require("../common");
 const {db} = require("../db");
 
-/*
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    thread TEXT NOT NULL,
-    author TEXT NOT NULL,
-    text TEXT NOT NULL,
-    timestamp TEXT,
-    read BOOL
-    select * from messages;
-1|1|/user/1|this is the message text, hey!|2023/4/17 13:00|false
-2|1|/user/1|this is a respones, hey!|2023/4/17 13:01|false
-sqlite> .schema
-CREATE TABLE messages (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        thread TEXT NOT NULL,
-        author TEXT NOT NULL,
-        text TEXT NOT NULL,
-        timestamp TEXT,
-        read BOOL
-    );
-CREATE TABLE sqlite_sequence(name,seq);
-CREATE TABLE threads (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_a TEXT NOT NULL,
-        user_b TEXT NOT NULL,
-        UNIQUE(user_a, user_b),
-        UNIQUE(user_b, user_a)
-    );
-
-*/
-
+/**
+ * @swagger
+ * /message/{id}:
+ *   get:
+ *     summary: retrieve all messages 
+ *     description: Retrieves all messages
+ *     operationId: DelMessageById
+ *     tags: [messaging API]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         description: message id
+ *         required: true
+ *     responses:
+ *       200:
+ *         description: Message Data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/RetrievedMessage'
+ *       404:
+ *         description: No such Message
+ *         examples: [ "Not Found", "No messages available" ]
+ */
 router.get("/messages", (req, res) => {
-  //const id = parseInt(req.params.id);
   stmt=db.prepare(`SELECT * FROM messages`);
   console.log(stmt);
   let messages = stmt.all();
   console.log(messages);
 
   if (messages.length < 1) {
-    res.statusMessage = "No such messages";
+    res.statusMessage = "No messages available";
     res.status(StatusCodes.NOT_FOUND).end();
     return;
   }
 
-  messages.uri = uri(`/message/${messages.id}`);
+  messages.uri = uri(`/messages/`);
   res.json(messages);
 });
 
-
-router.get("/messages/:id", (req, res) => {
-  let id = parseInt(req.params.id);
+/**
+ * @swagger
+ * /message/{thread_id}:
+ *   get:
+ *     summary: retrieve all messages 
+ *     description: Retrieves all messages
+ *     operationId: DelMessageById
+ *     tags: [messaging API]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         description: message id
+ *         required: true
+ *     responses:
+ *       200:
+ *         description: Message Data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/RetrievedMessage'
+ *       404:
+ *         description: No such Message
+ *         examples: [ "Not Found", "No messages available" ]
+ */
+router.get("/messages/:thread_id", (req, res) => {
+  let id = parseInt(req.params.thread_id);
   if(isNaN(id)){
+      console.log("NaN id");
   }
-  const stmt = db.prepare(`SELECT id, author FROM messages WHERE thread = ?`);
+  const stmt = db.prepare(`SELECT * FROM messages WHERE thread = ? ORDER BY timestamp`);//prepared statements do not like parameter passing
   console.log("id=",id);
-  let messages = stmt.all([id]);
+  let messages = stmt.all([""+id]);
   console.log({messages});
 
   if (messages.length < 1) {
@@ -79,28 +96,61 @@ router.get("/messages/:id", (req, res) => {
   res.json(messages);
 });
 
+/**
+ * @swagger
+ * /message/{thread_id}:
+ *   post:
+ *     summary: Create a new message
+ *     description: Creates a new message by a thread id.
+ *     operationId: PostMessageByThreadId
+ *     tags: [messaging API]
+ *     parameters:
+ *       - in: path
+ *         name: thread_id
+ *         description: thread id
+ *         required: true
+ *       - in: body
+ *         name: author
+ *         description: author id
+ *         required: true
+ *       - in: body
+ *         name: content
+ *         description: contents of the message
+ *         required: true
+ *     responses:
+ *       200:
+ *         description: Message Data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/RetrievedMessage'
+ *       404:
+ *         description: No such Message
+ *         examples: [ "Not Found", "No thread available" ]
+ */
 router.post("/messages/:thread_id", (req, res) => {
-  const message = req.body;
-
-  message.thread=req.thread_id;
-  message.author = message.author.trim();
-  message.text = message.timestamp.trim();
+  let message={};
+  //console.log({req});
+  message.thread=parseInt(req.params.thread_id);
+  console.log("thread",message.thread);
+  message.author = parseInt(req.body.author.trim());
+  message.content = req.body.content.trim();
   message.read = false;
-  message.timestamp = 'datetimestamp';//standardize format, generate timestamp/read timestamp
+  let current_time = Date.now();
+  message.timestamp = current_time;
+  message.lastedit = current_time;
 
-  const stmt = db.prepare("INSERT INTO messages(thread, author, text, timestamp, read) VALUES(?,?,?,?,?)");
-  messages = stmt.all([id]);
+  const stmt = db.prepare("INSERT INTO messages(thread, author, content, timestamp, lastedit, read) VALUES(?,?,?,?,?,?)");
 
+  let info={};
   try {
-    info = stmt.run([message.thread, message.author, message.text, message.timestamp, message.read]);
+    info = stmt.run([message.thread, message.author, message.content, message.timestamp, message.lastedit, message.read]);
   } catch (err) {
-    console.log("insert error: ", { err, info, messages });
+    console.log("insert error: ", { err, info, message });
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).end();
     return;
   }
 
-  message = messages[0];
-  message.uri = uri(`/message/${message.id}`);
+  message.uri = uri(`/message/${info.id}`);
   res.json(message);
 });
-
