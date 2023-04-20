@@ -126,3 +126,10 @@ describe("GET /content/likes/post/:post_id", () => {
         expect(res.statusCode).toBe(200)
     })
 })
+
+describe("GET /content/likes/post/:comment_id", () => {
+    it("Get a likes by post id", async () => {
+        const res = await conn.get(`/content/likes/comment/1`)
+        expect(res.statusCode).toBe(200)
+    })
+})
