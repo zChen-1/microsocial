@@ -168,11 +168,11 @@
  *           type: string
  *           minLength: 4
  *           format: password
- *           description: Guess. No leading or trailing spaces. Never returned by an API.
+ *           description: Guess. No leading or trailing spaces. Never returned by an API. description Columns to sort by, separated by commas. Names are case-insensitive. Sorts are ascending unless a "-" is given. "+" is accepted but is unnecessary. Acceptable columns are id and name.
+
  *       examples: [
  *         { name: "alonzo", password: "lambda" }
  *         ]
- * 
  * 
  *     PatchingUser:
  *       type: object
@@ -191,5 +191,55 @@
  *       examples: [
  *         { name: "alonzo", password: "lambda" }
  *       ]
+ *
+  *     UserFilteringSpec:
+ *       description: Valid query parameters. Result set is Users who match ALL criteria.
+ *       type: object
+ *       examples: 
+ *           - id_LE: 1000
+ *           - id_GE: 50
+ *           - name_LE: "zebra"
+ *           - name_GE: "aardvark"
+ *       properties:
+ *         id_LE:
+ *           type: integer
+ *           minimum: 1
+ *           description: Users with an Id <<= this will be returned.
+ *         id_GE:
+ *           type: integer
+ *           minimum: 1
+ *           description: Users with an Id >= this will be returned.
+ *         name_LE:
+ *           type: string
+ *           minLength: 1
+ *           description: Users with an Name <= this (case insensitive) will be returned.
+ *         name_GE:
+ *           type: string
+ *           minLength: 1
+ *           description: Users with an Name >= this (case insensitive) will be returned.
+ * 
+ *     UserSortingSpec:
+ *       type:  array
+ *       uniqueItems: true
+ *       minItems: 1
+ *       maxItems: 2
+ *       items:
+ *          type: string
+ *          nullable: false
+ *          enum: [ id, id-, id+, name-, name, name+ ]
+ * 
+ *     UserSortingOption:
+ *         type: string
+ *         nullable: false
+ *         enum: 
+ *          - id
+ *          - name
+ *
+ *     UserSortingSpec_bad:
+ *       type:  array
+ *       items:
+ *          type: string 
+ *          //$ref: '#/components/schemas/UserSortingOption'
+ * 
  */
-
+ 

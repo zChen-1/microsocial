@@ -47,7 +47,7 @@ function validators_setup() {
         basePath,
       });
       if (errors.length) {
-        console.log({ schemaName, data, schemaName, errors });
+        console.log({ message: "error detected", schemaName, data, schemaName, errors });
       }
       return errors;
     };
