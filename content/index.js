@@ -45,9 +45,9 @@ fs.readdir('./routes', (err, files) => {
 })
 
 // Test db to see if INSERT, CREATE, AND GET work
-testCreateTable()
-testTable()
-testDropTable()
+// testCreateTable()
+// testTable()
+// testDropTable()
 
 // initialize Database
 createDatabase()
