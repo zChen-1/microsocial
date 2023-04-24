@@ -84,7 +84,7 @@ db.exec(`CREATE TABLE IF NOT EXISTS threads (
  *         timestamp:
  *           type: integer
  *           minimum: 1
- *           readOnly true
+ *           readOnly: true
  *           description: The unix time generated Date.now() in the server on object creation. Used to manage message order in a thread's conversation.
  *         lastedit:
  *           type: integer

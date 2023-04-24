@@ -13,24 +13,49 @@ const {db} = require("../db");
 
 /**
  * @swagger
- * /message/{id}:
+ * /messages:
  *   get:
  *     summary: retrieve all messages 
- *     description: Retrieves all messages
- *     operationId: DelMessageById
- *     tags: [messaging API]
- *     parameters:
- *       - in: path
- *         name: id
- *         description: message id
- *         required: true
+ *     description: Retrieves all messages ordered by thread, timestamp.
+ *     operationId: GetMessages
+ *     tags: [Messaging API]
  *     responses:
  *       200:
- *         description: Message Data
+ *         description: A list of all message data
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/RetrievedMessage'
+ *               "$ref": "#/components/schemas/messages"
+ *             example:
+ *               [
+ *                 {
+ *                   "id": 1,
+ *                   "thread": 1,
+ *                   "author": 1,
+ *                   "content": "Hello I am user 1.",
+ *                   "timestamp": 1681943395437,
+ *                   "lastedit": 1681943395437,
+ *                   "read": 1
+ *                 },
+ *                 {
+ *                   "id": 2,
+ *                   "thread": 1,
+ *                   "author": 2,
+ *                   "content": "Hello user 1, I am user 2.",
+ *                   "timestamp": 1681943395581,
+ *                  "lastedit": 1681943395581,
+ *                  "read": 0
+ *                 },
+ *                 {
+ *                   "id": 6,
+ *                   "thread": 2,
+ *                   "author": 2,
+ *                   "content": "User 2 talking to themselves.",
+ *                   "timestamp": 1681943396135,
+ *                   "lastedit": 1681943396135,
+ *                   "read": 0
+ *                 }
+ *               ]
  *       404:
  *         description: No such Message
  *         examples: [ "Not Found", "No messages available" ]
@@ -38,7 +63,7 @@ const {db} = require("../db");
 router.get("/messages", (req, res) => {
   stmt=db.prepare(`SELECT * FROM messages ORDER BY thread, timestamp`);
   let messages = stmt.all([]);
-  console.log(messages);
+  //console.log("retrieved ",messages.length,"messages");
 
   if (messages.length < 1) {
     res.statusMessage = "No messages available";
@@ -52,25 +77,45 @@ router.get("/messages", (req, res) => {
 
 /**
  * @swagger
- * /message/{thread_id}:
+ * /messages/{thread_id}:
  *   get:
- *     summary: retrieve all messages 
- *     description: Retrieves all messages
- *     operationId: DelMessageById
+ *     summary: Retrieve all messages in a thread.
+ *     description: Retrieves all messages in a thread.
+ *     operationId: GetMessagesByThreadId
  *     tags: [Messaging API]
  *     parameters:
  *       - in: path
  *         name: id
  *         description: message id
  *         required: true
- *             schema: integer
  *     responses:
  *       200:
- *         description: Message Data
+ *         description: A list of all message data
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/RetrievedMessage'
+ *               "$ref": "#/components/schemas/messages"
+ *             example:
+ *               [
+ *                 {
+ *                   "id": 1,
+ *                   "thread": 1,
+ *                   "author": 1,
+ *                   "content": "Hello I am user 1.",
+ *                   "timestamp": 1681943395437,
+ *                   "lastedit": 1681943395437,
+ *                   "read": 1
+ *                 },
+ *                 {
+ *                   "id": 2,
+ *                   "thread": 1,
+ *                   "author": 2,
+ *                   "content": "Hello user 1, I am user 2.",
+ *                   "timestamp": 1681943395581,
+ *                   "lastedit": 1681943395581,
+ *                   "read": 0
+ *                 }
+ *               ]
  *       404:
  *         description: No such Message
  *         examples: [ "Not Found", "No messages available" ]
@@ -98,12 +143,12 @@ router.get("/messages/:thread_id", (req, res) => {
 
 /**
  * @swagger
- * /message/{thread_id}:
+ * /messages/{thread_id}:
  *   post:
  *     summary: Create a new message
  *     description: Creates a new message by a thread id.
  *     operationId: PostMessageByThreadId
- *     tags: [messaging API]
+ *     tags: [Messaging API]
  *     parameters:
  *       - in: path
  *         name: thread_id
@@ -123,7 +168,15 @@ router.get("/messages/:thread_id", (req, res) => {
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/RetrievedMessage'
+ *               "$ref": "#/components/schemas/messages"
+ *             example:
+ *               {
+ *                 "id": 1,
+ *                 "author": 1,
+ *                 "timestamp": 1681943395437,
+ *                 "content": "Hello I am user 1, and I just posted this message.",
+ *                 "uri": "/message/1"
+ *               }
  *       404:
  *         description: No such Message
  *         examples: [ "Not Found", "No thread available" ]
@@ -151,7 +204,7 @@ router.post("/messages/:thread_id", (req, res) => {
     return;
   }
 
-  console.log({info});
+  //console.log({info});
 
   message.uri = uri(`/message/${info.lastInsertRowid}`);
   res.json(message);

@@ -14,12 +14,12 @@ const {db} = require("../db");
 
 /**
  * @swagger
- * /threads:
+ * /threads/{user_id}:
  *   get:
  *     summary: retrieve all threads by userid
- *     description: Retrieves all available to user by id
+ *     description: Retrieves all threads available to user by id
  *     operationId: GetThreadsById
- *     tags: [messaging API]
+ *     tags: [Messaging API]
  *     parameters:
  *       - in: path
  *         name: user_id
@@ -30,8 +30,11 @@ const {db} = require("../db");
  *         description: {/user/id : /messages/thread_id}
  *         content:
  *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/RetrievedThread'
+ *             example:
+ *               {
+ *                 "/user/2": "/messages/1",
+ *                 "/user/3": "/messages/3"
+ *               }
  *       404:
  *         description: No such Message
  *         examples: [ "Not Found", "No threads found" ]
@@ -63,25 +66,28 @@ router.get("/threads/:user_id", (req, res) => {
  * /threads:
  *   post:
  *     summary: post new thread 
- *     description: Post new thread
+ *     description: Post new thread between two users
  *     operationId: PostNewThread
- *     tags: [messaging API]
+ *     tags: [Messaging API]
  *     parameters:
  *       - in: body
- *         name: user_a
- *         description: user id
+ *         name: users
+ *         description: pair list of user id's
  *         required: true
- *       - in: body
- *         name: user_b
- *         description: user id
- *         required: true
+ *         example: users=[1,2]
  *     responses:
  *       200:
- *         description: Message Data
- *         content:
+ *         description: Thread Data
+ *         content: 
  *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/RetrievedThread'
+ *             schema: 
+ *               $ref: '#/components/schemas/threads'
+ *             example:
+ *               {
+ *                 "users": [1,2],
+ *                 "id": 1,
+ *                 "uri": "/messages/1"
+ *               }
  *       404:
  *         description: No such Message
  *         examples: [ "Not Found", "No threads found" ]
@@ -89,8 +95,14 @@ router.get("/threads/:user_id", (req, res) => {
 
 router.post("/threads", (req, res) => {
   let thread={};
-  thread.user_a = req.body.user_a.trim();
-  thread.user_b = req.body.user_b.trim();
+  let users=JSON.parse(req.body.users);//test with regex to make sure this the correct object
+  if(users.length!=2){
+      res.statusMessage = "incompatible number of users";
+      res.status(StatusCodes.UNPROCESSABLE_CONTENT).end();
+      return;
+  }
+  let user_a = users[0];
+  let user_b = users[1];
   //console.log({thread});
   // Check with users to see if uri's are valid
   let users_are_invalid=false;
@@ -117,7 +129,7 @@ router.post("/threads", (req, res) => {
   let info={};
   try {
       //console.log(thread.user_a,thread.user_b);
-     info = stmt.run([thread.user_a, thread.user_b]);
+     info = stmt.run([user_a, user_b]);
     //console.log('info',{info});
   } catch (err) {
     if (err.code === "SQLITE_CONSTRAINT_UNIQUE") {
@@ -133,6 +145,7 @@ router.post("/threads", (req, res) => {
   // we're just returning what they submitted.
   thread.id = info.lastInsertRowid;
   thread.uri = uri(`/messages/${thread.id}`);
+  thread.users=[user_a,user_b];
 
   res.set('Location',thread.uri);
   res.type('json');
