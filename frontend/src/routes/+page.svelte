@@ -12,6 +12,7 @@
     let tags = ""
     let image = null
     let description = ""
+    let imgBase64 = ""
 
     onMount(async () => {
         try {
@@ -23,21 +24,41 @@
     });
 
     const handleFileChange = (event) => {
-        console.log(event.target.result)
+        console.log(event.target.files[0])
         image = event.target.files[0]
     }
 
     const handleSubmit = async (event) => {
         event.preventDefault();
         if(title && description) {
-            console.log(title, tags, image, description)
-            const reader = new FileReader()
             if(image) {
+                const reader = new FileReader()
                 reader.readAsDataURL(image)
+                reader.onload = () => {
+                    imgBase64 = reader.result
+                    console.log(title, tags, imgBase64, description)
+                    axios.post(`${CONTENT_API}/posts`, {
+                        username: $user.name,
+                        title: title,
+                        tags: tags,
+                        image: imgBase64,
+                        description: description
+                    })
+                }
+            } else {
+                axios.post(`${CONTENT_API}/posts`, {
+                    username: $user.name,
+                    title: title,
+                    tags: tags,
+                    image: imgBase64,
+                    description: description
+                })
             }
-            // axios.post(`${CONTENT_API}/content/post`, {
-
-            // })
+            title = ""
+            tags = ""
+            image = null
+            description = ""
+            imgBase64 = ""
         }
     };
 
@@ -69,7 +90,7 @@
                 <p>{post.username}</p>
                 <p>{post.date}</p>
                 <p>{post.description}</p>
-                <!-- <img src={post.image} alt=""/> -->
+                <img src={post.image} alt=""/>
                 <p>{post.tags}</p>
             </div>
         {/each}
@@ -79,6 +100,12 @@
 <style>
     h3 {
         text-align: center;
+    }
+
+    img {
+        height: auto;
+        width: 100%;
+        object-fit: contain;         
     }
 
     .container {
