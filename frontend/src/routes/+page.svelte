@@ -17,20 +17,49 @@
         try {
             const response = await axios.get(`${CONTENT_API}/posts`);
             data = response.data.result
-            console.log(response.data);
         } catch (error) {
             console.error(error);
         }
     });
+
+    const handleFileChange = (event) => {
+        console.log(event.target.result)
+        image = event.target.files[0]
+    }
+
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        if(title && description) {
+            console.log(title, tags, image, description)
+            const reader = new FileReader()
+            if(image) {
+                reader.readAsDataURL(image)
+            }
+            // axios.post(`${CONTENT_API}/content/post`, {
+
+            // })
+        }
+    };
+
 </script>
 <div class="container">
     <div class="grid-container">
         {#if $user}
             <div class="post-container">
-                <h4>Post a post</h4>
-                <form>
+                <h3>Post a post</h3>
+                <form on:submit={handleSubmit}>
                     <input type="text" placeholder="Title" class="title-input" bind:value={title}/>
-                    <textarea type="text" placeholder="What's on your mind" bind:value={description}/>
+                    <textarea type="text" placeholder="What's on your mind?" bind:value={description}/>
+                    <input type="text" placeholder="Space between tags" class="tags-input" bind:value={tags}/>
+                    <div class="submit-container">
+                        <input type="file" id="fileinput" class="file-input" accept=".jpg, .jpeg, .heic, .heif, .png" on:change={handleFileChange}/>
+                        <label for="fileinput">
+                            <p class="custom-file">Image</p>
+                        </label>
+                        {#if title && description}
+                            <button class="submit-button" type="submit">Post</button>
+                        {/if}
+                    </div>
                 </form>
             </div>
         {/if}
@@ -48,7 +77,7 @@
 </div>
 
 <style>
-    h4 {
+    h3 {
         text-align: center;
     }
 
@@ -93,9 +122,57 @@
         border-color: gray;
     }
 
+    .file-input {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
     form {
         display: flex;
         flex-direction: column;
     }   
+
+    .tags-input {
+        width: auto;
+        padding: 10px;
+        font-size: 18px;
+        border-radius: 5px;
+        border-width: thin;
+        border-color: gray;
+        margin-top: 15px;        
+    }
+
+    .custom-file {
+        margin-top: 15px;
+        background-color: #007bff;
+        color: #fff;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .custom-file:hover {
+        background-color: #0062cc;
+    }
     
+    .submit-container {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .submit-button {
+        margin-top: 15px;
+        background-color: #3908e9;
+        color: #ffffff;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        height: 40px;
+    }
+
+    .submit-button:hover {
+        background-color: #500af3;
+    }
 </style>

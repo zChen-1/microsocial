@@ -6,7 +6,7 @@
     const handleSignInClick = () => {
         goto('/login')
     }
-    console.log($user)
+    
 </script>
 
 
