@@ -1,6 +1,8 @@
 import { db } from '../db.js'
 import Ajv, { ValidationError } from 'ajv'
 import { LikeComment, LikePost } from '../models/schema-validation.js'
+import { uri } from '../utils/uri.js'
+import axios from 'axios'
 
 const ajv = new Ajv({ allErrors: true })
 const likePostValidate = ajv.compile(LikePost)
@@ -14,15 +16,34 @@ export const likePost = async (req, res) => {
 
   const { post_id, username } = req.body
   const check = db.prepare(
-    `SELECT * FROM likesPost WHERE username=? AND post_id=?`
+    `SELECT * FROM likesPost WHERE post_id=? AND username=?`
   )
-  const checkRes = check.all(username, post_id)
+  const checkRes = check.all(post_id, username)
 
   if (checkRes.length === 0) {
     const q = db.prepare(
       `INSERT INTO likesPost(username, post_id) VALUES (?, ?);`
     )
     q.run(username, post_id)
+
+    // Set webhook to notification
+    // Get receiver_username
+    const queue = db.prepare(`SELECT username FROM posts WHERE id=?`)
+    const result = queue.get(post_id)
+    const receiver_username = result.username
+
+    // Send a post method to notification service
+    try {
+      await axios.post(uri('/notification/create', 'Notifications'), {
+        sender_username: username,
+        receiver_username: receiver_username,
+        action: `${username} liked your post`,
+        read: 0
+      })
+    } catch (error) {
+      console.log(error)
+    }
+
     return res.status(201).json({ message: 'liked' })
   } else {
     const q = db.prepare(

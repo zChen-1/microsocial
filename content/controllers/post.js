@@ -51,17 +51,27 @@ export const createPost = async (req, res) => {
   const q = db.prepare(
     'INSERT INTO posts (username, title, date, tags, image, description) VALUES (?, ?, ?, ?, ?, ?)'
   )
-  const result = q.run(username, title, currentDate.toISOString(), tags, image, description)
-  
-  return res.status(201).json({ message: 'success', data: {
-    id: result.lastInsertRowid,
-    date: currentDate.toISOString(),
-    description: description,
-    image: image,
-    tags: tags,
-    title: title,
-    username: username
-  }})
+  const result = q.run(
+    username,
+    title,
+    currentDate.toISOString(),
+    tags,
+    image,
+    description
+  )
+
+  return res.status(201).json({
+    message: 'success',
+    data: {
+      id: result.lastInsertRowid,
+      date: currentDate.toISOString(),
+      description: description,
+      image: image,
+      tags: tags,
+      title: title,
+      username: username
+    }
+  })
 }
 
 export const deletePostById = async (req, res) => {
