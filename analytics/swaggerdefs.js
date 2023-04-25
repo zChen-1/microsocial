@@ -104,28 +104,41 @@
  *           maxLength: 36
  *           description: Opaque string. To be passed when access_token expires.
  *       
- *     RetrievedUser:
+ *     RetrievedEvent:
  *       type: object
- *       summary: User schema submitted when updating.
+ *       summary: Event structure retrieved.
  *       properties:
  *         id:
  *           type: integer
  *           minimum: 1
  *           readOnly: true
- *           description: The auto-generated id of the book. Will be unique.
- *         name:
+ *           description: The auto-generated id of the event. Will be unique.
+ *         type:
  *           type: string
  *           minLength: 1
  *           maxLength: 32
  *           pattern: '^[A-Za-z0-9_.-]{1,32}$'
- *           description: Name that they log in with. Must be unique
- *         uri:
+ *           description: Event type.
+ *         message:
  *           type: string
- *           readOnly: true
- *           format: password
- *           description: URI to this object. Set by endpoint at creation.
+ *           minLength: 1
+ *           maxLength: 32
+ *           pattern: '^[A-Za-z0-9_.-]{1,32}$'
+ *           description: Event message. 
+ *         severity:
+ *           type: string
+ *           minLength: 1
+ *           maxLength: 32
+ *           pattern: '^[A-Za-z0-9_.-]{1,32}$'
+ *           description: Event severity.
+ *         time:
+ *           type: string
+ *           minLength: 1
+ *           maxLength: 32
+ *           pattern: '^[A-Za-z0-9_.-]{1,32}$'
+ *           description: Time of event.
  *       examples: [
- *         { id: 1, name: "alonzo", uri: "http://lh:8/user/14" }
+ *         { id: 1, type: "login" , message: "user has logged in" , severity: "Low", time: "3:12" }
  *       ]
  * 
  * 
@@ -150,6 +163,27 @@
  *         { name: "alonzo", password: "lambda" }
  *       ]
  * 
+//  *     CreatingEvent:
+//  *       type: object
+//  *       required:
+//  *         - name
+//  *         - password
+//  *       properties:
+//  *         name:
+//  *           type: string
+//  *           minLength: 1
+//  *           maxLength: 32
+//  *           pattern: '^[A-Za-z0-9_.-]{1,32}$'
+//  *           description: Name that they log in with. Must be unique
+//  *         password:
+//  *           type: string
+//  *           minLength: 4
+//  *           format: password
+//  *           description: Guess. No leading or trailing spaces. Never returned by an API.
+//  *       examples: [
+//  *         { name: "alonzo", password: "lambda" }
+//  *       ]
+//  *  * 
  * 
  *     UpdatingUser:
  *       type: object

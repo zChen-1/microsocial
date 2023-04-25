@@ -55,7 +55,7 @@ router.get("/events", (req, res) => {
  *       content:
  *          application/json:
  *            schema:
- *              $ref: '#/components/schemas/CreatingEvent'
+ *             $ref: '#/components/schemas/CreatingEvent'
  *     responses:
  *       201:
  *         description: Event Created
@@ -93,8 +93,8 @@ router.get("/events", (req, res) => {
  */
 router.post("/events", (req, res) => {
   const event = req.body;
-
-  errors = validate.CreatingEvent(event,"{body}");
+  errors = {}
+//  errors = validate.CreatingEvent(event,"{body}");
   if (errors.length) {
     res.json(errors);
     res.statusMessage = "Invalid data";
@@ -102,11 +102,10 @@ router.post("/events", (req, res) => {
     return;
   }
 
-  const stmt = db.prepare(`INSERT INTO events (name, password)
-                 VALUES (?, ?)`);
-
+  const stmt = db.prepare(`INSERT INTO events (type, message, severity, time)
+                 VALUES (?, ?, ?, ?)`);
   try {
-    info = stmt.run([event.name, event.password]);
+    info = stmt.run([event.type, event.message, event.severity, event.time]);
   } catch (err) {
     if (err.code === "SQLITE_CONSTRAINT_UNIQUE") {
       res.statusMessage = "Account already exists";
