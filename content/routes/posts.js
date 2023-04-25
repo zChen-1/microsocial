@@ -1,5 +1,12 @@
 import express from 'express'
-import { createPost, deletePostById, getAllPosts, getPostById, getPostByUsername, updatePostById } from '../controllers/post.js'
+import {
+  createPost,
+  deletePostById,
+  getAllPosts,
+  getPostById,
+  getPostByUsername,
+  updatePostById
+} from '../controllers/post.js'
 
 const router = express.Router()
 
@@ -130,7 +137,5 @@ router.delete('/:post_id', deletePostById)
  *         description: Invalid input data
  */
 router.put('/', updatePostById)
-
-
 
 export default router

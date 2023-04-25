@@ -4,9 +4,10 @@
     import { onMount } from 'svelte';
     import { CONTENT_API } from '../utils/api'
     import { user } from '../store'; 
+    import moment from 'moment'
 
     let data = []
-
+    const currentDate = new Date()
     // Post
     let title = ""
     let tags = ""
@@ -18,6 +19,7 @@
         try {
             const response = await axios.get(`${CONTENT_API}/posts`);
             data = response.data.result
+            console.log(data)
         } catch (error) {
             console.error(error);
         }
@@ -34,10 +36,10 @@
             if(image) {
                 const reader = new FileReader()
                 reader.readAsDataURL(image)
-                reader.onload = () => {
+                reader.onload = async () => {
                     imgBase64 = reader.result
                     console.log(title, tags, imgBase64, description)
-                    axios.post(`${CONTENT_API}/posts`, {
+                    let res = await axios.post(`${CONTENT_API}/posts`, {
                         username: $user.name,
                         title: title,
                         tags: tags,
@@ -46,13 +48,14 @@
                     })
                 }
             } else {
-                axios.post(`${CONTENT_API}/posts`, {
+                let res = await axios.post(`${CONTENT_API}/posts`, {
                     username: $user.name,
                     title: title,
                     tags: tags,
                     image: imgBase64,
                     description: description
                 })
+                console.log(res)
             }
             title = ""
             tags = ""
@@ -67,7 +70,7 @@
     <div class="grid-container">
         {#if $user}
             <div class="post-container">
-                <h3>Post a post</h3>
+                <h3 style="text-align: center;">Post a post</h3>
                 <form on:submit={handleSubmit}>
                     <input type="text" placeholder="Title" class="title-input" bind:value={title}/>
                     <textarea type="text" placeholder="What's on your mind?" bind:value={description}/>
@@ -86,22 +89,19 @@
         {/if}
         {#each data as post, i}
             <div class="post-container">
-                <p>ID: {post.id}</p>
-                <p>{post.username}</p>
-                <p>{post.date}</p>
+                <div style="display: flex; gap: 15px;">
+                    <p><b>{post.username}</b></p>
+                    <p class="date">{moment(currentDate).fromNow()}</p>
+                </div>
+                <h3><b>{post.title}</b></h3>
                 <p>{post.description}</p>
                 <img src={post.image} alt=""/>
-                <p>{post.tags}</p>
             </div>
         {/each}
     </div>
 </div>
 
 <style>
-    h3 {
-        text-align: center;
-    }
-
     img {
         height: auto;
         width: 100%;
@@ -201,5 +201,11 @@
 
     .submit-button:hover {
         background-color: #500af3;
+    }
+
+    .date {
+        color: gray;
+        font-size: small;
+        margin-top: 17px;
     }
 </style>
