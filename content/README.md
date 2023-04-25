@@ -40,5 +40,11 @@ npm run dev
 ## Prettier
 
 ```
-prettier --write "**/*.{js,jsx,ts,tsx,json,md}"
+npm run format"
+```
+
+## eslint
+
+```
+npm run lint
 ```
