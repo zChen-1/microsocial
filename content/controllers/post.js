@@ -1,6 +1,7 @@
 import { db } from '../db.js'
 import Ajv, { ValidationError } from 'ajv'
 import { Post, UpdatePost } from '../models/schema-validation.js'
+// import axios from 'axios'
 
 const ajv = new Ajv({ allErrors: true })
 const postValidate = ajv.compile(Post)

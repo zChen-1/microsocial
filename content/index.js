@@ -4,7 +4,7 @@ import cookieParser from 'cookie-parser'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import helmet from 'helmet'
-import { testCreateTable, testTable, testDropTable } from './db.js'
+// import { testCreateTable, testTable, testDropTable } from './db.js'
 import { swaggerSpec, swaggerUIOptions } from './swagger-config/swagger.js'
 import { createDatabase } from './models/schema.js'
 import swaggerUi from 'swagger-ui-express'
@@ -14,6 +14,7 @@ import path from 'path'
 dotenv.config()
 
 const app = express()
+/* eslint-disable-next-line */
 const PORT = process.env.PORT || 8001
 
 app.set('title', 'Microsocial Content API')
