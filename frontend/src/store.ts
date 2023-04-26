@@ -10,4 +10,7 @@ const temp_user : user = {
     token: "JWTtoken"
 }
 
+const postData : any = []
+
 export const user = writable<user>(temp_user || null)
+export const data = writable(postData)
