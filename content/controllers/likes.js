@@ -34,12 +34,13 @@ export const likePost = async (req, res) => {
 
     // Send a post method to notification service
     try {
-      await axios.post(uri('/notification/create', 'Notifications'), {
+      const res = await axios.post(uri('/notification/create', 'Notifications'), {
         sender_username: username,
         receiver_username: receiver_username,
         action: `${username} liked your post`,
         read: 0
       })
+      console.log(res)
     } catch (error) {
       console.log(error)
     }
