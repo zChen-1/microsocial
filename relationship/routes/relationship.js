@@ -112,11 +112,7 @@ router.put("/relationship/:id", (req, res) => {
 
   const updatedRelationship = req.body;
 
-<<<<<<< HEAD
   errors = validate.RelationshipId(updatedRelationship, "{body}");
-=======
-  errors = validate.UpdatingRelationship(updatedRelationship, "{body}");
->>>>>>> 1c862d2dbbe681e000137fb68a71dbce664208f4
   if (errors.length) {
     res.json(errors);
     res.statusMessage = "Invalid update";
@@ -195,11 +191,7 @@ router.patch("/relationship/:id", (req, res) => {
 
   const updatedRelationship = req.body;
 
-<<<<<<< HEAD
   errors = validate.RelationshipId(updatedRelationship, "{body}");
-=======
-  errors = validate.PatchingRelationship(updatedRelationship, "{body}");
->>>>>>> 1c862d2dbbe681e000137fb68a71dbce664208f4
   if (errors.length) {
     res.json(errors);
     res.statusMessage = "Invalid update";
@@ -261,11 +253,7 @@ router.patch("/relationship/:id", (req, res) => {
  *         required: true
  *         description: Numeric ID of the relationship.
  *         schema:
-<<<<<<< HEAD
  *            type: $ref: '#/components/schemas/RelationshipId'
-=======
- *            type: integer
->>>>>>> 1c862d2dbbe681e000137fb68a71dbce664208f4
  *     responses:
  *       204:
  *         description: Relationship Deleted
