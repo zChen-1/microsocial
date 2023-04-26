@@ -1,5 +1,13 @@
 import express from 'express'
-import { addComment, deleteCommentById, getAllComments, getCommentById, getCommentsByPostId, getCommentsByUsername, updateComment } from '../controllers/comment.js'
+import {
+  addComment,
+  deleteCommentById,
+  getAllComments,
+  getCommentById,
+  getCommentsByPostId,
+  getCommentsByUsername,
+  updateComment
+} from '../controllers/comment.js'
 
 const router = express.Router()
 /**
@@ -13,7 +21,6 @@ const router = express.Router()
  *         description: Success
  */
 router.get('/', getAllComments)
-
 
 /**
  * @swagger
@@ -41,7 +48,6 @@ router.get('/', getAllComments)
  *         description: Invalid input data
  */
 router.post('/', addComment)
-
 
 /**
  * @swagger

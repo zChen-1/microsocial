@@ -2,16 +2,25 @@
 // @ts-nocheck
     import axios from 'axios';
     import { AUTH_API } from '../../utils/api'
+    import { user } from '../../store';
+    import { onMount } from 'svelte';
+
     let name = '';
     let password = '';
 
     // @ts-ignore
+    // onMount(() => {
+    //     if (user) {
+    //         window.location.href = '/';
+    //     }
+    // });
+
     const handleSubmit = async (event) => {
         event.preventDefault();
         console.log(name, password)
         try {
-        const response = await axios.post(AUTH_API, { name, password });
-        console.log(response.data);
+            const response = await axios.post(`${AUTH_API}/auth/login`, { name, password });
+            console.log(response.data);
         } catch (error) {
             console.error(error);
         }
@@ -34,11 +43,13 @@
 </div>
 
 <style>
+    
 input {
   width: 300px;
   height: 40px;
   font-size: 18px;
   border-radius: 5px;
+  padding-left: 10px ;
 }
 
 h2 {
@@ -49,6 +60,7 @@ h2 {
     display: flex;
     justify-content: center;
     align-items: center;
+    margin-top: 50px;
 }
 
 .form-wrapper {
