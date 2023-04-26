@@ -44,7 +44,7 @@
 
     const handleSubmit = async (event) => {
         event.preventDefault();
-        if(title && description) {
+        if(title && description && tags) {
             if(image) {
                 const reader = new FileReader()
                 reader.readAsDataURL(image)
@@ -130,7 +130,7 @@
                         <label for="fileinput">
                             <p class="custom-file">Image</p>
                         </label>
-                        {#if title && description}
+                        {#if title && description && tags}
                             <button class="submit-button" type="submit">Post</button>
                         {/if}
                     </div>
