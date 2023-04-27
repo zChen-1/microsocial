@@ -253,7 +253,7 @@ router.patch("/relationship/:id", (req, res) => {
  *         required: true
  *         description: Numeric ID of the relationship.
  *         schema:
- *            type: $ref: '#/components/schemas/RelationshipId'
+ *            type: integer
  *     responses:
  *       204:
  *         description: Relationship Deleted
