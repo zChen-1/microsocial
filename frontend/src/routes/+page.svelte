@@ -18,11 +18,14 @@
     let image = null
     let description = ""
     let imgBase64 = ""
+    let noOfPages = 1
+    let pageNumber = 1
 
     onMount(async () => {
         try {
-            const postResponse = await axios.get(`${CONTENT_API}/posts`);
+            const postResponse = await axios.get(`${CONTENT_API}/posts?page=${pageNumber}`);
             const posts = postResponse.data.result
+            noOfPages = postResponse.data.noOfPages
             const postsData = []
             for(let post of posts) {
                 const likeRes = await axios.get(`${CONTENT_API}/likes/post/${post.id}`)
@@ -30,8 +33,8 @@
                 const commentRes = await axios.get(`${CONTENT_API}/comments/post/${post.id}`)
                 postsData.push({...post, likes: likesArray, comments: commentRes.data.result})
             }
-            data.set(postsData.reverse())              
-            console.log(data)
+            data.set(postsData)              
+            console.log($data, noOfPages)
         } catch (error) {
             console.error(error);
         }
