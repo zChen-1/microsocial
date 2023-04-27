@@ -55,7 +55,7 @@ router.get("/events", (req, res) => {
  *       content:
  *          application/json:
  *            schema:
- *             $ref: '#/components/schemas/CreatingEvent'
+ *              $ref: '#/components/schemas/CreatingEvent'
  *     responses:
  *       201:
  *         description: Event Created
@@ -93,17 +93,18 @@ router.get("/events", (req, res) => {
  */
 router.post("/events", (req, res) => {
   const event = req.body;
-  errors = {}
-//  errors = validate.CreatingEvent(event,"{body}");
-  if (errors.length) {
-    res.json(errors);
-    res.statusMessage = "Invalid data";
-    res.status(StatusCodes.UNPROCESSABLE_ENTITY).end();
-    return;
-  }
+
+  // errors = validate.CreatingEvent(event,"{body}");
+  // if (errors.length) {
+  //   res.json(errors);
+  //   res.statusMessage = "Invalid data";
+  //   res.status(StatusCodes.UNPROCESSABLE_ENTITY).end();
+  //   return;
+  // }
 
   const stmt = db.prepare(`INSERT INTO events (type, message, severity, time)
                  VALUES (?, ?, ?, ?)`);
+
   try {
     info = stmt.run([event.type, event.message, event.severity, event.time]);
   } catch (err) {
