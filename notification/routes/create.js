@@ -1,7 +1,12 @@
+// Create a new notification: POST /notifications
+
 import express from 'express'
 import {db} from '../db.js'
 
 const router = express.Router()
+
+// Path because of folder-based endpoints
+// Current path is notification/create
 
 /**
  * @swagger
