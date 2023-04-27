@@ -5,8 +5,6 @@ Sync your fork on github and let's work on this later.
 - Create a new notification: POST /notifications/create [DONE]
 - Retrieve a specific notification: GET /notifications/retrieve/{receiver_username} [DONE]
 - Update a notification: PUT /notifications/{notificationId} [TODO]
-- Delete a notification: DELETE /notifications/{notificationId} [TODO]
-- Retrieve a list of notifications: GET /notifications [TODO]
 
 # How to run
 1. Go to your github repository and sync fork
