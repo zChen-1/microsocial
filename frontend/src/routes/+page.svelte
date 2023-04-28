@@ -112,8 +112,12 @@
         }
     }
 
-    const handleShowMore = () => {
-
+    const handleShowMore = async () => {
+        pageNumber++
+        console.log(pageNumber)
+        const res = await fetchPosts(pageNumber)
+        const newPosts = res.data
+        data.update(prev => [...prev, ...newPosts])
     }
 
 </script>
@@ -177,10 +181,20 @@
             </div>
         {/each}
     </div>
-
+    {#if pageNumber < noOfpages}
+        <!-- svelte-ignore a11y-click-events-have-key-events -->
+        <div style="text-align:center;" on:click={handleShowMore}>
+            <p class="show-more">Show more</p>
+        </div>
+    {/if}
 </div>
 
 <style>
+    .show-more {
+        color: #007bff;
+        cursor: pointer;
+    }
+
     .likes-comments {
         font-family: 'Open Sans', sans-serif;
         color: gray;
@@ -195,7 +209,6 @@
     .container {
         margin: 0 auto;
         max-width: 900px;
-        display: flex;
         padding: 15px;
     }
 
