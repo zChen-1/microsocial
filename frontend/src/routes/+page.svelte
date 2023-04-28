@@ -76,16 +76,17 @@
         }
     };
 
-    const handleDelete = (post_id) => {
+
+    const handleDelete = async (post_id) => {
         // delete
         try {
-            axios.delete(`${CONTENT_API}/posts/${post_id}`)
+            let res = await axios.delete(`${CONTENT_API}/posts/${post_id}`)
+            data.update(prev => prev.filter((post) => post.id !== post_id)) 
         } catch (error) {
             console.log(error)
         }
-        data.update(prev => prev.filter((post) => post.id !== post_id)) 
-
     }
+
 
     const handleLike = (post_id, i, like) => {
         // console.log($data)
