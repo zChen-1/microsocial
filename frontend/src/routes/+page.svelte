@@ -2,7 +2,7 @@
 // @ts-nocheck
     import axios from 'axios';
     import { onMount } from 'svelte';
-    import { CONTENT_API } from '../utils/api'
+    import { CONTENT_API, fetchPosts } from '../utils/api'
     import { user } from '../store'; 
     import moment from 'moment'
     import Icon from '@iconify/svelte';
@@ -18,23 +18,16 @@
     let image = null
     let description = ""
     let imgBase64 = ""
-    let noOfPages = 1
-    let pageNumber = 1
 
+    let pageNumber = 1
+    let noOfpages = 1
     onMount(async () => {
         try {
-            const postResponse = await axios.get(`${CONTENT_API}/posts?page=${pageNumber}`);
-            const posts = postResponse.data.result
-            noOfPages = postResponse.data.noOfPages
-            const postsData = []
-            for(let post of posts) {
-                const likeRes = await axios.get(`${CONTENT_API}/likes/post/${post.id}`)
-                const likesArray = likeRes.data.result.map(like => like.username)
-                const commentRes = await axios.get(`${CONTENT_API}/comments/post/${post.id}`)
-                postsData.push({...post, likes: likesArray, comments: commentRes.data.result})
-            }
+            const res = await fetchPosts(pageNumber)
+            const postsData = res.data
+            noOfpages = res.noOfPages
             data.set(postsData)              
-            console.log($data, noOfPages)
+            console.log($data)
         } catch (error) {
             console.error(error);
         }
@@ -118,6 +111,11 @@
             console.log(error)
         }
     }
+
+    const handleShowMore = () => {
+
+    }
+
 </script>
 <div class="container">
     <div class="grid-container">
@@ -179,6 +177,7 @@
             </div>
         {/each}
     </div>
+
 </div>
 
 <style>
@@ -196,7 +195,7 @@
     .container {
         margin: 0 auto;
         max-width: 900px;
-        /* margin-top: 30px; */
+        display: flex;
         padding: 15px;
     }
 
