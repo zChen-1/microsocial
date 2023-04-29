@@ -1,3 +1,4 @@
+// @ts-nocheck
 import axios from 'axios';
 
 export const AUTH_API = 'http://localhost:8000';
@@ -19,3 +20,16 @@ export const fetchPosts = async (page) => {
 	}
 	return { data: postsData, noOfPages: noOfPages };
 };
+
+export const fetchOnePost = async (post_id) => {
+	const postResponse = await axios.get(`${CONTENT_API}/posts/${post_id}`)
+	const post = postResponse.data.result
+
+	const likeRes = await axios.get(`${CONTENT_API}/likes/post/${post_id}`)
+	const likes = likeRes.data.result
+
+	const commentRes = await axios.get(`${CONTENT_API}/comments/post/${post_id}`)
+	const comments = commentRes.data.result
+
+	return {...post, likes: likes, comments:comments}
+}

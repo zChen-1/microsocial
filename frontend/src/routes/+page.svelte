@@ -11,6 +11,7 @@
     import likeOutline from '@iconify/icons-mdi/like-outline';
     import likeIcon from '@iconify/icons-mdi/like';
     import { data } from '../store';
+    import { goto } from '$app/navigation';
 
     // Post
     let title = ""
@@ -19,6 +20,7 @@
     let description = ""
     let imgBase64 = ""
 
+    // Page
     let pageNumber = 1
     let noOfpages = 1
     onMount(async () => {
@@ -121,6 +123,9 @@
         data.update(prev => [...prev, ...newPosts])
     }
 
+    const routePostDetails = (post_id) => {
+        goto(`/post/${post_id}`)
+    }
 </script>
 <div class="container">
     <div class="grid-container">
@@ -174,7 +179,8 @@
                             </div>
                             {/if}
                         </div>
-                        <div style="display: flex; gap: 10px">      
+                        <!-- svelte-ignore a11y-click-events-have-key-events -->
+                        <div style="display: flex; gap: 10px" on:click={() => routePostDetails(post.id)}>      
                             <p class="likes-comments">{post.comments?.length || 0}</p>
                                 <Icon icon={commentRounded} color="#007bff" style="cursor: pointer; margin-top: 14px" height=20/>
                         </div>
