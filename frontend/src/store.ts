@@ -11,6 +11,8 @@ const temp_user: user = {
 };
 
 const postData: any = [];
+const postDetails: any = {}
 
 export const user = writable<user>(temp_user || null);
 export const data = writable(postData);
+export const post = writable(postDetails)

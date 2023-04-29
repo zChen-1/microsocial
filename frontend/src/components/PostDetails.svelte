@@ -11,48 +11,21 @@
     import axios from 'axios';
     import { goto } from '$app/navigation';
     import { CONTENT_API } from '../utils/api'
-
+    
     export let post
-    export let i
-
     const handleDelete = async (post_id) => {
         // delete
         try {
-            let res = await axios.delete(`${CONTENT_API}/posts/${post_id}`)
-            data.update(prev => prev.filter((post) => post.id !== post_id)) 
+            // let res = await axios.delete(`${CONTENT_API}/posts/${post_id}`)
+            goto('/') 
         } catch (error) {
             console.log(error)
         }
     }
 
-    const handleLike = async (post_id, i, like) => {
-        try {
-            await axios.post(`${CONTENT_API}/likes/post`, {
-                post_id: post_id,
-                username: $user.name
-            })
-            if(like) {
-                data.update(prev => {
-                    prev[i].likes.push($user.name)
-                    console.log(prev)
-                    return [...prev]
-                })
-            } else {
-                data.update(prev => { 
-                    prev[i].likes = prev[i].likes.filter(username => username !== $user.name)
-                    console.log(prev)
-                    return [...prev]
-                })
-            }
-        } catch (error) {
-            console.log(error)
-        }
-    }
+    const handleLike = async (post_id) => {
 
-    const routePostDetails = (post_id) => {
-        goto(`/post/${post_id}`)
     }
-
 </script>
 
 <div class="post-container">
@@ -68,38 +41,39 @@
         </div>
         {/if}
     </div>
-    <!-- svelte-ignore a11y-click-events-have-key-events -->
-    <div on:click={routePostDetails(post.id)}>
-        <h3 style="cursor:pointer"><b>{post.title}</b></h3>
-    </div>
-    <!-- svelte-ignore a11y-click-events-have-key-events -->
-    <div on:click={routePostDetails(post.id)}>
-        <p style="cursor:pointer">{post.description}</p>
-    </div>
+    <h3><b>{post.title}</b></h3>
+    <p>{post.description}</p>
+
     <img src={post.image} alt=""/>
     <div style="display: flex; gap: 20px">
         <div style="display: flex; gap: 10px">      
             <p class="likes-comments">{post.likes?.length || 0}</p>
             <!-- svelte-ignore a11y-click-events-have-key-events -->
             {#if !post.likes.includes($user.name)}
-                <div on:click={() => handleLike(post.id, i, true)}>
+                <div on:click={() => {}}>
                     <Icon icon={likeOutline} color="#007bff" style="cursor: pointer; margin-top: 12px" height=20/>
                 </div>
                 {:else}
-                <div on:click={() => handleLike(post.id, i, false)}>
+                <div on:click={() => {}}>
                     <Icon icon={likeIcon} color="#007bff" style="cursor: pointer; margin-top: 12px" height=20/>
                 </div>
                 {/if}
             </div>
             <!-- svelte-ignore a11y-click-events-have-key-events -->
-            <div style="display: flex; gap: 10px" on:click={() => routePostDetails(post.id)}>      
+            <div style="display: flex; gap: 10px" on:click={() => {}}>      
                 <p class="likes-comments">{post.comments?.length || 0}</p>
                     <Icon icon={commentRounded} color="#007bff" style="cursor: pointer; margin-top: 14px" height=20/>
             </div>
-        </div>
+    </div>
 </div>
 
+
 <style>
+    .post-container {
+        box-shadow: 0 0 4px 0 rgba(0, 0, 0, 0.5);
+        padding: 15px;  
+        border-radius: 10px;
+    }
     .post-container {
         box-shadow: 0 0 4px 0 rgba(0, 0, 0, 0.5);
         padding: 15px;  
@@ -123,5 +97,3 @@
         margin-top: 17px;
     }
 </style>
-
-
