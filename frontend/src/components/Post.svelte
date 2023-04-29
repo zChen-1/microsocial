@@ -9,7 +9,11 @@
     import { data } from '../store';
     import { user } from '../store';
     import axios from 'axios';
+    import { goto } from '$app/navigation';
+
+
     export let post
+    export let i
 
     const handleDelete = async (post_id) => {
         // delete
@@ -45,6 +49,10 @@
         }
     }
 
+    const routePostDetails = (post_id) => {
+        goto(`/post/${post_id}`)
+    }
+
 </script>
 
 <div class="post-container">
@@ -60,8 +68,14 @@
         </div>
         {/if}
     </div>
-    <h3><b>{post.title}</b></h3>
-    <p>{post.description}</p>
+    <!-- svelte-ignore a11y-click-events-have-key-events -->
+    <div on:click={routePostDetails(post.id)}>
+        <h3 style="cursor:pointer"><b>{post.title}</b></h3>
+    </div>
+    <!-- svelte-ignore a11y-click-events-have-key-events -->
+    <div on:click={routePostDetails(post.id)}>
+        <p style="cursor:pointer">{post.description}</p>
+    </div>
     <img src={post.image} alt=""/>
     <div style="display: flex; gap: 20px">
         <div style="display: flex; gap: 10px">      
@@ -78,7 +92,7 @@
                 {/if}
             </div>
             <!-- svelte-ignore a11y-click-events-have-key-events -->
-            <div style="display: flex; gap: 10px">      
+            <div style="display: flex; gap: 10px" on:click={() => routePostDetails(post.id)}>      
                 <p class="likes-comments">{post.comments?.length || 0}</p>
                     <Icon icon={commentRounded} color="#007bff" style="cursor: pointer; margin-top: 14px" height=20/>
             </div>
@@ -95,6 +109,18 @@
     .likes-comments {
         font-family: 'Open Sans', sans-serif;
         color: gray;
+    }
+
+    img {
+        height: auto;
+        width: 100%;
+        object-fit: contain;         
+    }
+
+    .date {
+        color: gray;
+        font-size: small;
+        margin-top: 17px;
     }
 </style>
 
