@@ -26,10 +26,10 @@ export const fetchOnePost = async (post_id) => {
 	const post = postResponse.data.result
 
 	const likeRes = await axios.get(`${CONTENT_API}/likes/post/${post_id}`)
-	const likes = likeRes.data.result
+	const likesArray = likeRes.data.result.map((like) => like.username);
 
 	const commentRes = await axios.get(`${CONTENT_API}/comments/post/${post_id}`)
 	const comments = commentRes.data.result
 
-	return {...post, likes: likes, comments:comments}
+	return {...post, likes: likesArray, comments:comments}
 }

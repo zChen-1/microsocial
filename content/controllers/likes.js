@@ -45,7 +45,7 @@ export const likePost = async (req, res) => {
       console.log(error)
     }
 
-    return res.status(201).json({ message: 'liked', data: {
+    return res.status(200).json({ message: 'liked', data: {
       username: username,
       post_id: post_id
     } })
@@ -54,7 +54,7 @@ export const likePost = async (req, res) => {
       `DELETE FROM likesPost WHERE username=? AND post_id=?;`
     )
     const result = q.run(username, post_id)
-    return res.status(204).json({ message: 'unliked', data: result.lastInsertRowid})
+    return res.status(200).json({ message: 'unliked', data: result.lastInsertRowid})
   }
 }
 
