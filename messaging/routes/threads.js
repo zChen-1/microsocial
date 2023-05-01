@@ -8,9 +8,12 @@ var express = require('express');
 var router = express.Router();
 module.exports.router = router;
 
-const {uri} = require("../common");
+const { uri,fetch } = require('../common')
 const {db} = require("../db");
-
+const {notifyUsersNewMessage,
+    notifyUsersNewThread,
+    isBlocked,
+    createEvent} = require('../service_calls');
 
 /**
  * @swagger
@@ -44,7 +47,6 @@ router.get("/threads/:user_id", (req, res) => {
 
   const stmt = db.prepare("SELECT id,user_a,user_b FROM threads WHERE user_a=? OR user_b=?");
   threads = stmt.all([id,id]);
-  //console.log({threads});
 
   if (threads.length < 1) {
     res.statusMessage = "No threads found";
@@ -57,8 +59,16 @@ router.get("/threads/:user_id", (req, res) => {
       else if(me===user_b){return user_a;}
   }
   let messages={};
+  //TODO: expand this routine as it only provides the latest threads per comunication
+    // As part of the above, we should restructure to a multi-list pair
+    // ex:[[usera]:[/messages/1, /messages/5], [usera, userb, userc]:[/messages/2] ]
   threads.forEach(element => messages[`/user/${not_me(id,element.user_a,element.user_b)}`]=`/messages/${element.id}`);
   res.json(messages);
+  createEvent(
+      type="Messages => GetThreadsByID",
+      severity="info",
+      message=`Fetched thread id="${id}"`
+  )
 });
 
 /**
@@ -92,7 +102,6 @@ router.get("/threads/:user_id", (req, res) => {
  *         description: No such Message
  *         examples: [ "Not Found", "No threads found" ]
  */
-
 router.post("/threads", (req, res) => {
   let thread={};
   let users=JSON.parse(req.body.users);//test with regex to make sure this the correct object
@@ -103,8 +112,8 @@ router.post("/threads", (req, res) => {
   }
   let user_a = users[0];
   let user_b = users[1];
-  //console.log({thread});
-  // Check with users to see if uri's are valid
+
+  //TODO: Check with users to see if uri's are valid
   let users_are_invalid=false;
   if (
       users_are_invalid
@@ -115,14 +124,16 @@ router.post("/threads", (req, res) => {
   }
 
   // Check with relationship to see if users are blocked
-  let blocked=false;
+  /*
   if (
-      blocked
+      isBlocked(users)
   ) {
     res.statusMessage = "This user has blocked you";
     res.status(StatusCodes.UNPROCESSABLE_CONTENT).end();
     return;
   }
+  */
+  console.log("fine up to here");
 
   let stmt = db.prepare(`INSERT INTO threads(user_a, user_b)
                  VALUES(?, ?)`);
@@ -146,9 +157,16 @@ router.post("/threads", (req, res) => {
   thread.id = info.lastInsertRowid;
   thread.uri = uri(`/messages/${thread.id}`);
   thread.users=[user_a,user_b];
-
+  
   res.set('Location',thread.uri);
   res.type('json');
   res.json(thread);
   res.status(StatusCodes.CREATED);
+
+  notifyUsersNewThread(thread.users);
+  createEvent(
+      type="Messages => PostNewThread",
+      severity="info",
+      message=`New thread id=${thread.id} users=${thread.users}`
+  )
 });

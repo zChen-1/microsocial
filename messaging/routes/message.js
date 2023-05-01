@@ -10,6 +10,7 @@ module.exports.router = router;
 
 const {uri} = require("../common");
 const {db} = require("../db");
+const {notifyUsers, createEvent} = require('../service_calls');
 
 /**
  * @swagger
@@ -58,6 +59,12 @@ router.get("/message/:id", (req, res) => {
   message = message[0];
   message.uri = uri(`/message/${message.id}`);
   res.json(message);
+
+  createEvent(
+    type="Messages => GetMessageByMessageId",
+    severity="info",
+    message=`Retrieved message id=${message.id}`
+  )
 });
 
 /**
@@ -89,13 +96,13 @@ router.delete("/message/:message_id", (req, res) => {
       return;
   }
   const msgexists= db.prepare("SELECT id FROM messages WHERE id=?");
-  let found=msgexists.run([id]);
-  if(!found.id){
+  let found=msgexists.all([id]);
+  if(found.length===0){
       res.statusMessage = "No such message";
       res.status(StatusCodes.NOT_FOUND).end();
       return;
   }
-  // Verify and Assert user.id==author.id
+  //TODO: Verify and Assert user.id==author.id
   // const stmt = db.prepare("DELETE * FROM message WHERE id=? AND author=?");
   // Should include a 403 if the author does not own that message
     // ...or just claim the message doesn't exist
@@ -103,14 +110,16 @@ router.delete("/message/:message_id", (req, res) => {
   const stmt = db.prepare("DELETE FROM messages WHERE id=?");
   stmt.run([id]);
 
-  //actually verify deletion
+  //TODO: actually verify deletion
 
-  //messages = messages[0];
-  //messages.uri = uri(`/messages/${message.id}`);
-  console.log("okay deletion");
   res.statusMessage ="Message Deleted";
-  res.status(200).end();
-  return;
+  res.status(StatusCodes.OK).end();
+
+  createEvent(
+    type="Messages => DelMessageById",
+    severity="info",
+    message=`Deleted message id=${id}`
+  )
 });
 
 
@@ -151,16 +160,15 @@ router.delete("/message/:message_id", (req, res) => {
  */
 router.put("/message/:message_id", (req, res) => {
   let messageId = req.params.message_id.trim();
-  let content = req.body.content.trim();
+  let content = req.body.content;//.trim();
 
-  // should check for valid author as well
-  let getstmt = db.prepare(`SELECT id, thread, author,timestamp, content FROM messages where id = ?`);
+  //TODO: should check for valid author as well
+  let getstmt = db.prepare(`SELECT id, thread, author, timestamp, content FROM messages where id = ?`);
   message=getstmt.all([messageId])[0];
   message.content = content;
   let current_time = Date.now();
   message.lastedit = current_time;
 
-  console.log({message});
   const stmt = db.prepare(`UPDATE messages SET content=?,lastedit=? WHERE id=?`);
 
   let info={};
@@ -173,4 +181,9 @@ router.put("/message/:message_id", (req, res) => {
   }
 
   res.json(message);
+  createEvent(
+    type="Messages => PutMessageByMessageId",
+    severity="info",
+    message=`Updated message id=${message.id} content.length=${message.content.length}`
+  )
 });

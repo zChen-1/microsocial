@@ -10,6 +10,7 @@ module.exports.router = router;
 
 const {uri} = require("../common");
 const {db} = require("../db");
+const {notifyUsersNewMessage, createEvent} = require('../service_calls');
 
 /**
  * @swagger
@@ -60,10 +61,10 @@ const {db} = require("../db");
  *         description: No such Message
  *         examples: [ "Not Found", "No messages available" ]
  */
-router.get("/messages", (req, res) => {
+router.get("/messages",  (req, res) => {
+  //TODO: include dynamic query selection from parameters
   stmt=db.prepare(`SELECT * FROM messages ORDER BY thread, timestamp`);
   let messages = stmt.all([]);
-  //console.log("retrieved ",messages.length,"messages");
 
   if (messages.length < 1) {
     res.statusMessage = "No messages available";
@@ -73,6 +74,11 @@ router.get("/messages", (req, res) => {
 
   messages.uri = uri(`/messages/`);
   res.json(messages);
+  createEvent(
+      type="Messages => GetMessages",
+      severity="info",
+      message=`Retrieved all messages, messages.length=${messages.length}`
+  )
 });
 
 /**
@@ -120,15 +126,13 @@ router.get("/messages", (req, res) => {
  *         description: No such Message
  *         examples: [ "Not Found", "No messages available" ]
  */
-router.get("/messages/:thread_id", (req, res) => {
+router.get("/messages/:thread_id",  (req, res) => {
   let id = parseInt(req.params.thread_id);
   if(isNaN(id)){
       console.log("NaN id");
   }
-  const stmt = db.prepare(`SELECT * FROM messages WHERE thread = ? ORDER BY timestamp`);//prepared statements do not like parameter passing
-  console.log("id=",id);
+  const stmt = db.prepare(`SELECT * FROM messages WHERE thread = ? ORDER BY timestamp`);
   let messages = stmt.all([id]);
-  console.log({messages});
 
   if (messages.length < 1) {
     res.statusMessage = "No such threads";
@@ -136,9 +140,13 @@ router.get("/messages/:thread_id", (req, res) => {
     return;
   }
 
-  //messages = messages[0];
   messages.uri = uri(`/messages/${messages.id}`);
   res.json(messages);
+  createEvent(
+    type="Messages => getMessagesByThreadId",
+    severity="info",
+    message=`Retrieved thread id=${id} thread length=${messages.length}`
+  )
 });
 
 /**
@@ -182,19 +190,18 @@ router.get("/messages/:thread_id", (req, res) => {
  *         examples: [ "Not Found", "No thread available" ]
  */
 router.post("/messages/:thread_id", (req, res) => {
+  //TODO: accept pagination parameters IE: load 50 most recent messages
   let message={};
-  //console.log({req});
   message.thread=parseInt(req.params.thread_id);
-  console.log("thread",message.thread);
-  message.author = parseInt(req.body.author.trim());
+  message.author = parseInt(req.body.author);
   message.content = req.body.content.trim();
+
   message.read = 0;
   let current_time = Date.now();
   message.timestamp = current_time;
   message.lastedit = current_time;
 
   const stmt = db.prepare("INSERT INTO messages(thread, author, content, timestamp, lastedit, read) VALUES(?,?,?,?,?,?)");
-
   let info={};
   try {
     info = stmt.run([message.thread, message.author, message.content, message.timestamp, message.lastedit, message.read]);
@@ -204,8 +211,19 @@ router.post("/messages/:thread_id", (req, res) => {
     return;
   }
 
-  //console.log({info});
+  // get users in the thread
+  const noteUsers=db.prepare("SELECT user_a, user_b FROM threads WHERE id=?;");
+  let others=noteUsers.all([message.thread])[0];
+
+  // send notification to each user
+  notifyUsersNewMessage([others.user_a,others.user_b],message);
+  
 
   message.uri = uri(`/message/${info.lastInsertRowid}`);
   res.json(message);
+  createEvent(
+      type="Messages => PostMessageByThreadId",
+      severity="info",
+      message=`Posted new message thread=${message.thread} author=${message.author} content.length=${message.content.length}`
+  )
 });
