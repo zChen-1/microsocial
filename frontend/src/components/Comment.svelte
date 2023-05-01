@@ -1,13 +1,12 @@
 <script>
-// @ts-nocheck
+	// @ts-nocheck
 
-    export let data;
+	export let data;
 </script>
 
 <div>
-    {data}
+	{data}
 </div>
 
 <style>
-
 </style>
