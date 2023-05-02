@@ -5,6 +5,7 @@ const {
   getStatusCode,
 } = require('http-status-codes');
 var express = require('express');
+var bleach = require('bleach');
 var router = express.Router();
 module.exports.router = router;
 
@@ -203,7 +204,9 @@ router.post("/messages/:thread_id", (req, res) => {
   let message={};
   message.thread = parseInt(req.params.thread_id);
   message.author = parseInt(req.body.author);
+
   message.content = req.body.content.trim();
+  message.content = bleach.sanitize(message.content);
 
   message.read = 0;
   let current_time = Date.now();
