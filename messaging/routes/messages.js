@@ -134,8 +134,11 @@ router.get("/messages",  (req, res) => {
 router.get("/messages/:thread_id",  (req, res) => {
   let id = parseInt(req.params.thread_id);
   if(isNaN(id) || !id){
-    //TODO: error event here
-    console.log("NaN id");
+    createEvent(
+      type="Messages => getMessagesByThreadId",
+      severity="low",
+      message=`Error parsing id:${id}`
+    )
     res.statusMessage("Could not parse thread_id")
     res.status(StatusCodes.BAD_REQUEST).end()
     return
@@ -144,7 +147,11 @@ router.get("/messages/:thread_id",  (req, res) => {
   let messages = stmt.all([id]);
 
   if (messages.length < 1) {
-    //TODO: error event here
+    createEvent(
+      type="Messages => getMessagesByThreadId",
+      severity="low",
+      message=`GetMessagesByThreadId requested thread that doesn't exist ${id}`
+    )
     res.statusMessage = "No such threads";
     res.status(StatusCodes.NOT_FOUND).end();
     return;
@@ -217,8 +224,11 @@ router.post("/messages/:thread_id", (req, res) => {
   const noteUsers=db.prepare("SELECT user_a, user_b FROM threads WHERE id=?");
   let others=noteUsers.all([message.thread]);
   if(others.length<1){
-    //TODO: error event here
-    console.log("Thread does not exist")
+    createEvent(
+      type="Messages => PostNewMessageByThreadId",
+      severity="medium",
+      message=`Attempted to post to non-existent thread threadId=${id}`
+    )
     res.statusMessage="Thread does not exist"
     res.status(StatusCodes.NOT_FOUND).end()
     return
@@ -228,7 +238,11 @@ router.post("/messages/:thread_id", (req, res) => {
   others=others[0]
   let threadUsers=[parseInt(others.user_a),parseInt(others.user_b)]
   if(!threadUsers.includes(message.author)){
-    //TODO: error event here
+    createEvent(
+      type="Messages => PostNewMessageByThreadId",
+      severity="medium",
+      message=`Attempted to post to threadId=${id}, even though ${message.author} is not a member.`
+    )
     console.log("You are not in this thread")
     res.statusMessage="You are not in this thread"
     res.status(StatusCodes.UNAUTHORIZED).end()
@@ -240,8 +254,11 @@ router.post("/messages/:thread_id", (req, res) => {
   try {
     info = stmt.run([message.thread, message.author, message.content, message.timestamp, message.lastedit, message.read]);
   } catch (err) {
-    //TODO: error event here
-    console.log("insert error: ", { err, info, message });
+    createEvent(
+      type="Messages => PostNewMessageByThreadId",
+      severity="medium",
+      message=`Attempted to post to threadId=${id} and failed: ${err}`
+    )
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).end();
     return;
   }
