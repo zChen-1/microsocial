@@ -67,6 +67,7 @@ router.get("/messages",  (req, res) => {
   let messages = stmt.all([]);
 
   if (messages.length < 1) {
+    //TODO: error event here
     res.statusMessage = "No messages available";
     res.status(StatusCodes.NOT_FOUND).end();
     return;
@@ -91,8 +92,8 @@ router.get("/messages",  (req, res) => {
  *     tags: [Messaging API]
  *     parameters:
  *       - in: path
- *         name: id
- *         description: message id
+ *         name: thread_id
+ *         description: The id of the thread you wish to read
  *         required: true
  *     responses:
  *       200:
@@ -125,16 +126,24 @@ router.get("/messages",  (req, res) => {
  *       404:
  *         description: No such Message
  *         examples: [ "Not Found", "No messages available" ]
+ *       401:
+ *         description: Could not parse thread_id
+ *         examples: ["Could not parse thread_id"]
  */
 router.get("/messages/:thread_id",  (req, res) => {
   let id = parseInt(req.params.thread_id);
-  if(isNaN(id)){
-      console.log("NaN id");
+  if(isNaN(id) || !id){
+    //TODO: error event here
+    console.log("NaN id");
+    res.statusMessage("Could not parse thread_id")
+    res.status(StatusCodes.BAD_REQUEST).end()
+    return
   }
   const stmt = db.prepare(`SELECT * FROM messages WHERE thread = ? ORDER BY timestamp`);
   let messages = stmt.all([id]);
 
   if (messages.length < 1) {
+    //TODO: error event here
     res.statusMessage = "No such threads";
     res.status(StatusCodes.NOT_FOUND).end();
     return;
@@ -162,14 +171,11 @@ router.get("/messages/:thread_id",  (req, res) => {
  *         name: thread_id
  *         description: thread id
  *         required: true
- *       - in: body
- *         name: author
- *         description: author id
- *         required: true
- *       - in: body
- *         name: content
- *         description: contents of the message
- *         required: true
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/postMessage'
  *     responses:
  *       200:
  *         description: Message Data
@@ -188,11 +194,14 @@ router.get("/messages/:thread_id",  (req, res) => {
  *       404:
  *         description: No such Message
  *         examples: [ "Not Found", "No thread available" ]
+ *       401:
+ *         description: Author is not in thread
+ *         examples: ["You are not in this thread"]
  */
 router.post("/messages/:thread_id", (req, res) => {
   //TODO: accept pagination parameters IE: load 50 most recent messages
   let message={};
-  message.thread=parseInt(req.params.thread_id);
+  message.thread = parseInt(req.params.thread_id);
   message.author = parseInt(req.body.author);
   message.content = req.body.content.trim();
 
@@ -201,25 +210,43 @@ router.post("/messages/:thread_id", (req, res) => {
   message.timestamp = current_time;
   message.lastedit = current_time;
 
+  // get users in the thread and check thread exists
+  const noteUsers=db.prepare("SELECT user_a, user_b FROM threads WHERE id=?");
+  let others=noteUsers.all([message.thread]);
+  if(others.length<1){
+    //TODO: error event here
+    console.log("Thread does not exist")
+    res.statusMessage="Thread does not exist"
+    res.status(StatusCodes.NOT_FOUND).end()
+    return
+  }
+
+  // check that author is in thread
+  others=others[0]
+  let threadUsers=[parseInt(others.user_a),parseInt(others.user_b)]
+  if(!threadUsers.includes(message.author)){
+    //TODO: error event here
+    console.log("You are not in this thread")
+    res.statusMessage="You are not in this thread"
+    res.status(StatusCodes.UNAUTHORIZED).end()
+    return
+  }
+
   const stmt = db.prepare("INSERT INTO messages(thread, author, content, timestamp, lastedit, read) VALUES(?,?,?,?,?,?)");
   let info={};
   try {
     info = stmt.run([message.thread, message.author, message.content, message.timestamp, message.lastedit, message.read]);
   } catch (err) {
+    //TODO: error event here
     console.log("insert error: ", { err, info, message });
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).end();
     return;
   }
-
-  // get users in the thread
-  const noteUsers=db.prepare("SELECT user_a, user_b FROM threads WHERE id=?;");
-  let others=noteUsers.all([message.thread])[0];
+  message.uri = uri(`/message/${info.lastInsertRowid}`);
 
   // send notification to each user
-  notifyUsersNewMessage([others.user_a,others.user_b],message);
-  
+  notifyUsersNewMessage(threadUsers,message);
 
-  message.uri = uri(`/message/${info.lastInsertRowid}`);
   res.json(message);
   createEvent(
       type="Messages => PostMessageByThreadId",

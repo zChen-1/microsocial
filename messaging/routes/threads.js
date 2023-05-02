@@ -35,39 +35,51 @@ const {notifyUsersNewMessage,
  *           application/json:
  *             example:
  *               {
- *                 "/user/2": "/messages/1",
- *                 "/user/3": "/messages/3"
+ *                 "[\"/user/2\"]": ["/messages/1"],
+ *                 "[\"/user/3\"]": ["/messages/3", "/messages/4"]
  *               }
  *       404:
  *         description: No such Message
  *         examples: [ "Not Found", "No threads found" ]
  */
 router.get("/threads/:user_id", (req, res) => {
+  //TODO: add last touched date or otherwise sort threads by activity
   const id = parseInt(req.params.user_id);
 
   const stmt = db.prepare("SELECT id,user_a,user_b FROM threads WHERE user_a=? OR user_b=?");
   threads = stmt.all([id,id]);
 
   if (threads.length < 1) {
+    //TODO: error event here
     res.statusMessage = "No threads found";
     res.status(StatusCodes.NOT_FOUND).end();
     return;
   }
 
   function not_me(me,user_a,user_b){
-      if(me===user_a){return user_b;}
-      else if(me===user_b){return user_a;}
+      if(me===user_a){return [`/user/${user_b}`];}
+      else if(me===user_b){return [`/user/${user_a}`];}
   }
-  let messages={};
-  //TODO: expand this routine as it only provides the latest threads per comunication
-    // As part of the above, we should restructure to a multi-list pair
-    // ex:[[usera]:[/messages/1, /messages/5], [usera, userb, userc]:[/messages/2] ]
-  threads.forEach(element => messages[`/user/${not_me(id,element.user_a,element.user_b)}`]=`/messages/${element.id}`);
-  res.json(messages);
+
+  /*
+   * Orangize result into {[other thread participant uris]:[messages/thread_id for those users]}
+   */
+  let conversations={};
+  for(convIndex in threads){
+    let element=threads[convIndex]
+    let convHead=JSON.stringify(not_me(id,element.user_a,element.user_b))
+    if(conversations[convHead]){
+      conversations[convHead].push(`/messages/${element.id}`)
+    }
+    else{
+      conversations[convHead]=[`/messages/${element.id}`]
+    }
+  }
+  res.json(conversations);
   createEvent(
       type="Messages => GetThreadsByID",
       severity="info",
-      message=`Fetched thread id="${id}"`
+      message=`Fetched threads userId="${id}"`
   )
 });
 
@@ -79,12 +91,11 @@ router.get("/threads/:user_id", (req, res) => {
  *     description: Post new thread between two users
  *     operationId: PostNewThread
  *     tags: [Messaging API]
- *     parameters:
- *       - in: body
- *         name: users
- *         description: pair list of user id's
- *         required: true
- *         example: users=[1,2]
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/postThread'
  *     responses:
  *       200:
  *         description: Thread Data
@@ -101,13 +112,23 @@ router.get("/threads/:user_id", (req, res) => {
  *       404:
  *         description: No such Message
  *         examples: [ "Not Found", "No threads found" ]
+ *       400:
+ *         description: Could not proccess users
+ *         example: ["Could not proccess users", "incompatible number of users", "One or more users does not exist"]
  */
 router.post("/threads", (req, res) => {
   let thread={};
-  let users=JSON.parse(req.body.users);//test with regex to make sure this the correct object
+  let users=req.body.users;
+
+  //TODO: Postman sends as string, but /docs sends as object, quick patch, needs attention.
+  if(typeof users===typeof ""){
+    users=JSON.parse(users);
+  }
   if(users.length!=2){
+      //TODO: error event here
+      console.log("users length !=2 ",users.length)
       res.statusMessage = "incompatible number of users";
-      res.status(StatusCodes.UNPROCESSABLE_CONTENT).end();
+      res.status(StatusCodes.BAD_REQUEST).end();
       return;
   }
   let user_a = users[0];
@@ -119,7 +140,7 @@ router.post("/threads", (req, res) => {
       users_are_invalid
   ) {
     res.statusMessage = "One or more users does not exist";
-    res.status(StatusCodes.UNPROCESSABLE_CONTENT).end();
+    res.status(StatusCodes.BAD_REQUEST).end();
     return;
   }
 
@@ -133,27 +154,24 @@ router.post("/threads", (req, res) => {
     return;
   }
   */
-  console.log("fine up to here");
 
   let stmt = db.prepare(`INSERT INTO threads(user_a, user_b)
                  VALUES(?, ?)`);
   let info={};
   try {
-      //console.log(thread.user_a,thread.user_b);
      info = stmt.run([user_a, user_b]);
-    //console.log('info',{info});
   } catch (err) {
     if (err.code === "SQLITE_CONSTRAINT_UNIQUE") {
       res.statusMessage = "Thread already exists";
       res.status(StatusCodes.BAD_REQUEST).end();
       return;
     }
+    //TODO: error event here
     console.log("insert error: ", { err, info, user });
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).end();
     return;
   }
 
-  // we're just returning what they submitted.
   thread.id = info.lastInsertRowid;
   thread.uri = uri(`/messages/${thread.id}`);
   thread.users=[user_a,user_b];

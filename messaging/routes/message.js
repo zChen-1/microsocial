@@ -51,6 +51,7 @@ router.get("/message/:id", (req, res) => {
   message = stmt.all([id]);
 
   if (message.length < 1) {
+    //TODO: error event here
     res.statusMessage = "No such message";
     res.status(StatusCodes.NOT_FOUND).end();
     return;
@@ -69,7 +70,7 @@ router.get("/message/:id", (req, res) => {
 
 /**
  * @swagger
- * /message/{message_id}:
+ * /message/{del_message_id}:
  *   delete:
  *     summary: Delete a single message
  *     description: Delete one message by id.
@@ -77,7 +78,7 @@ router.get("/message/:id", (req, res) => {
  *     tags: [Messaging API]
  *     parameters:
  *       - in: path
- *         name: id
+ *         name: del_message_id
  *         description: message id
  *         required: true
  *     responses:
@@ -87,17 +88,18 @@ router.get("/message/:id", (req, res) => {
  *         description: No such Message
  *         examples: [ "Not Found", "No such message" ]
  */
-router.delete("/message/:message_id", (req, res) => {
-  let id = parseInt(req.params.message_id);
+router.delete("/message/:del_message_id", (req, res) => {
+  let id = parseInt(req.params.del_message_id);
   if(isNaN(id)){
-      console.log("failed to parse in id=",id);
-      res.statusMessage = "No such message";
-      res.status(StatusCodes.NOT_FOUND).end();
+      //TODO: error event here
+      res.statusMessage = "id is NaN";
+      res.status(StatusCodes.BAD_REQUEST).end();
       return;
   }
   const msgexists= db.prepare("SELECT id FROM messages WHERE id=?");
   let found=msgexists.all([id]);
   if(found.length===0){
+      //TODO: error event here
       res.statusMessage = "No such message";
       res.status(StatusCodes.NOT_FOUND).end();
       return;
@@ -133,12 +135,15 @@ router.delete("/message/:message_id", (req, res) => {
  *     tags: [Messaging API]
  *     parameters:
  *       - in: path
- *         name: id
+ *         name: message_id
  *         description: message id
+ *         example: 1
  *         required: true
- *       - in: body
- *         name: content
- *         description: Updated message text.
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref : '#/components/schemas/putMessageContent'
  *     responses:
  *       200:
  *         description: Message Data
@@ -159,13 +164,14 @@ router.delete("/message/:message_id", (req, res) => {
  *         examples: [ "Not Found", "No message available" ]
  */
 router.put("/message/:message_id", (req, res) => {
-  let messageId = req.params.message_id.trim();
-  let content = req.body.content;//.trim();
+  let messageId = req.params.message_id;
+  let msgContent = req.body.content;//.trim();
 
   //TODO: should check for valid author as well
+  let message={content:NaN}
   let getstmt = db.prepare(`SELECT id, thread, author, timestamp, content FROM messages where id = ?`);
   message=getstmt.all([messageId])[0];
-  message.content = content;
+  message.content = msgContent;
   let current_time = Date.now();
   message.lastedit = current_time;
 
@@ -175,6 +181,7 @@ router.put("/message/:message_id", (req, res) => {
   try {
     info = stmt.run([message.content, message.lastedit,message.id]);
   } catch (err) {
+    //TODO: error event here
     console.log("insert error: ", { err, info, message });
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).end();
     return;

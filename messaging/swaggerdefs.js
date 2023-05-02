@@ -80,7 +80,7 @@ db.exec(`CREATE TABLE IF NOT EXISTS threads (
  *           minimum: 1
  *           pattern: '^[A-Za-z0-9_.-]{1,32}$'
  *           readOnly: false
- *           description: The message contents the author wishes to communicate to the sendee.
+ *           description: The message contents the person wishes to communicate to the sendee.
  *         timestamp:
  *           type: integer
  *           minimum: 1
@@ -96,5 +96,40 @@ db.exec(`CREATE TABLE IF NOT EXISTS threads (
  *           minimum: 1
  *           readonly: false
  *           description: A integer boolean value managing if the reciever has seen the message. By default on object creation, this value is set to false.
-  */
+ *
+ *     postThread:
+ *       type: object
+ *         required:
+ *           - users
+ *       properties:
+ *         users:
+ *           type: application/json
+ *           description: A list of two integers containing the userIds of each user in the thread.
+ *           examples: ["[1,2]"]
+ *           
+ *     putMessageContent:
+ *       type: object
+ *       required:
+ *         - content
+ *       properties:
+ *         content:
+ *           type: string
+ *           examples: ["this is a a direct message! (and I just updated the content)"]
+ *           description: the actual message a user wishes to post to a thread
+ *
+ *     postMessage:
+ *       type: object
+ *       required:
+ *         - author
+ *         - content
+ *       properties:
+ *         author:
+ *           type: integer
+ *           example: 6
+ *           description: the userId of the person sending the message
+ *         content:
+ *           type: string
+ *           examples: ["this is a a direct message!"]
+ *           description: the actual message a user wishes to post to a thread
+*/
 
