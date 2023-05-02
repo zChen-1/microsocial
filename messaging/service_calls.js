@@ -70,7 +70,7 @@ async function isBlocked(users) {
 async function getUserInfo(userId) {
     let myUri=`/user/${userId}`
     let userInfo={username:userId,uri:myUri}
-    let userStatus=400;
+    let userStatus=StatusCodes.BAD_REQUEST
     try {
       // Grab user name for notification service
       userInfo=await axios.get(uri(myUri,'Users'),{});
@@ -99,6 +99,7 @@ async function getUserInfo(userId) {
 async function notifyUsersNewThread(threadMembers) {
   for(let person in threadMembers){
     let recipient=await getUserInfo(threadMembers[person]);
+    let res={status:StatusCodes.BAD_REQUEST}
     try {
       // Grab user name for notification service
       let data={
