@@ -99,7 +99,7 @@ db.exec(`CREATE TABLE IF NOT EXISTS threads (
  *
  *     postThread:
  *       type: object
- *         required:
+ *       required:
  *           - users
  *       properties:
  *         users:
