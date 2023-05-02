@@ -5,6 +5,7 @@ const {
   getStatusCode,
 } = require('http-status-codes');
 var express = require('express');
+var bleach = require('bleach');
 var router = express.Router();
 module.exports.router = router;
 
@@ -161,7 +162,7 @@ router.delete("/message/:message_id", (req, res) => {
 router.put("/message/:message_id", (req, res) => {
   let messageId = req.params.message_id.trim();
   let content = req.body.content;//.trim();
-
+  content = bleach.sanitize(content);
   //TODO: should check for valid author as well
   let getstmt = db.prepare(`SELECT id, thread, author, timestamp, content FROM messages where id = ?`);
   message=getstmt.all([messageId])[0];
