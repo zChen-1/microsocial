@@ -10,6 +10,7 @@ module.exports.router = router;
 
 const {uri} = require("../common");
 const {db} = require("../db");
+const {notifyUsersNewMessage, createEvent} = require('../service_calls');
 
 /**
  * @swagger
@@ -60,12 +61,13 @@ const {db} = require("../db");
  *         description: No such Message
  *         examples: [ "Not Found", "No messages available" ]
  */
-router.get("/messages", (req, res) => {
+router.get("/messages",  (req, res) => {
+  //TODO: include dynamic query selection from parameters
   stmt=db.prepare(`SELECT * FROM messages ORDER BY thread, timestamp`);
   let messages = stmt.all([]);
-  //console.log("retrieved ",messages.length,"messages");
 
   if (messages.length < 1) {
+    //TODO: error event here
     res.statusMessage = "No messages available";
     res.status(StatusCodes.NOT_FOUND).end();
     return;
@@ -73,6 +75,11 @@ router.get("/messages", (req, res) => {
 
   messages.uri = uri(`/messages/`);
   res.json(messages);
+  createEvent(
+      type="Messages => GetMessages",
+      severity="info",
+      message=`Retrieved all messages, messages.length=${messages.length}`
+  )
 });
 
 /**
@@ -85,8 +92,8 @@ router.get("/messages", (req, res) => {
  *     tags: [Messaging API]
  *     parameters:
  *       - in: path
- *         name: id
- *         description: message id
+ *         name: thread_id
+ *         description: The id of the thread you wish to read
  *         required: true
  *     responses:
  *       200:
@@ -119,26 +126,36 @@ router.get("/messages", (req, res) => {
  *       404:
  *         description: No such Message
  *         examples: [ "Not Found", "No messages available" ]
+ *       401:
+ *         description: Could not parse thread_id
+ *         examples: ["Could not parse thread_id"]
  */
-router.get("/messages/:thread_id", (req, res) => {
+router.get("/messages/:thread_id",  (req, res) => {
   let id = parseInt(req.params.thread_id);
-  if(isNaN(id)){
-      console.log("NaN id");
+  if(isNaN(id) || !id){
+    //TODO: error event here
+    console.log("NaN id");
+    res.statusMessage("Could not parse thread_id")
+    res.status(StatusCodes.BAD_REQUEST).end()
+    return
   }
-  const stmt = db.prepare(`SELECT * FROM messages WHERE thread = ? ORDER BY timestamp`);//prepared statements do not like parameter passing
-  console.log("id=",id);
+  const stmt = db.prepare(`SELECT * FROM messages WHERE thread = ? ORDER BY timestamp`);
   let messages = stmt.all([id]);
-  console.log({messages});
 
   if (messages.length < 1) {
+    //TODO: error event here
     res.statusMessage = "No such threads";
     res.status(StatusCodes.NOT_FOUND).end();
     return;
   }
 
-  //messages = messages[0];
   messages.uri = uri(`/messages/${messages.id}`);
   res.json(messages);
+  createEvent(
+    type="Messages => getMessagesByThreadId",
+    severity="info",
+    message=`Retrieved thread id=${id} thread length=${messages.length}`
+  )
 });
 
 /**
@@ -154,14 +171,11 @@ router.get("/messages/:thread_id", (req, res) => {
  *         name: thread_id
  *         description: thread id
  *         required: true
- *       - in: body
- *         name: author
- *         description: author id
- *         required: true
- *       - in: body
- *         name: content
- *         description: contents of the message
- *         required: true
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/postMessage'
  *     responses:
  *       200:
  *         description: Message Data
@@ -180,32 +194,63 @@ router.get("/messages/:thread_id", (req, res) => {
  *       404:
  *         description: No such Message
  *         examples: [ "Not Found", "No thread available" ]
+ *       401:
+ *         description: Author is not in thread
+ *         examples: ["You are not in this thread"]
  */
 router.post("/messages/:thread_id", (req, res) => {
+  //TODO: accept pagination parameters IE: load 50 most recent messages
   let message={};
-  //console.log({req});
-  message.thread=parseInt(req.params.thread_id);
-  console.log("thread",message.thread);
-  message.author = parseInt(req.body.author.trim());
+  message.thread = parseInt(req.params.thread_id);
+  message.author = parseInt(req.body.author);
   message.content = req.body.content.trim();
+
   message.read = 0;
   let current_time = Date.now();
   message.timestamp = current_time;
   message.lastedit = current_time;
 
-  const stmt = db.prepare("INSERT INTO messages(thread, author, content, timestamp, lastedit, read) VALUES(?,?,?,?,?,?)");
+  // get users in the thread and check thread exists
+  const noteUsers=db.prepare("SELECT user_a, user_b FROM threads WHERE id=?");
+  let others=noteUsers.all([message.thread]);
+  if(others.length<1){
+    //TODO: error event here
+    console.log("Thread does not exist")
+    res.statusMessage="Thread does not exist"
+    res.status(StatusCodes.NOT_FOUND).end()
+    return
+  }
 
+  // check that author is in thread
+  others=others[0]
+  let threadUsers=[parseInt(others.user_a),parseInt(others.user_b)]
+  if(!threadUsers.includes(message.author)){
+    //TODO: error event here
+    console.log("You are not in this thread")
+    res.statusMessage="You are not in this thread"
+    res.status(StatusCodes.UNAUTHORIZED).end()
+    return
+  }
+
+  const stmt = db.prepare("INSERT INTO messages(thread, author, content, timestamp, lastedit, read) VALUES(?,?,?,?,?,?)");
   let info={};
   try {
     info = stmt.run([message.thread, message.author, message.content, message.timestamp, message.lastedit, message.read]);
   } catch (err) {
+    //TODO: error event here
     console.log("insert error: ", { err, info, message });
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).end();
     return;
   }
-
-  //console.log({info});
-
   message.uri = uri(`/message/${info.lastInsertRowid}`);
+
+  // send notification to each user
+  notifyUsersNewMessage(threadUsers,message);
+
   res.json(message);
+  createEvent(
+      type="Messages => PostMessageByThreadId",
+      severity="info",
+      message=`Posted new message thread=${message.thread} author=${message.author} content.length=${message.content.length}`
+  )
 });
