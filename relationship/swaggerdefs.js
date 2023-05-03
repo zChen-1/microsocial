@@ -60,6 +60,17 @@
  *             type: integer
  *             minimum: 1
  *             description: user id from user thats being followed
+ * 
+ *        RetrievedRelationship:
+ *          type: object
+ *          required:
+ *            - relationship_id
+ *          properties:
+ *            relationship_id:
+ *              type: integer
+ *              minimum: 1
+ *            description: corresponding relationship id being retrieved
+ * 
  *     
  * 
  */
