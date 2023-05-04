@@ -113,7 +113,6 @@ router.delete("/relationship/:id", (req, res) => {
   }
   res.status(StatusCodes.NO_CONTENT).end();
 });
-
 /**
  * @swagger
  * /relationships:
@@ -158,9 +157,9 @@ router.delete("/relationship/:id", (req, res) => {
  *                "Relationships with that id already exists" ]
  */
 router.post("/relationships", (req, res) => {
-  const user = req.body;
+  const relationship = req.body;
 
-  errors = validate.CreatingRelationship(relationship,"{body}");
+  errors = validate.CreatingRelationship(relationship, "{body}");
   if (errors.length) {
     res.json(errors);
     res.statusMessage = "Invalid data";
@@ -172,10 +171,10 @@ router.post("/relationships", (req, res) => {
                  VALUES (?, ?)`);
 
   try {
-    info = stmt.run([user.name, user.password]);
+    info = stmt.run([relationship.user_id, relationship.following_user_id]);
   } catch (err) {
     if (err.code === "SQLITE_CONSTRAINT_UNIQUE") {
-      res.statusMessage = "Account already exists";
+      res.statusMessage = "Relationship already exists";
       res.status(StatusCodes.BAD_REQUEST).end();
       return;
     }
@@ -187,9 +186,8 @@ router.post("/relationships", (req, res) => {
   // we're just returning what they submitted. but we never return the password
   relationship.id = info.lastInsertRowid;
   relationship.uri = uri(`/relationship/${relationship.id}`);
-  delete user.password;
 
-  res.set('Location',relationship.uri);
+  res.set('Location', relationship.uri);
   res.type('json');
   res.json(relationship);
   res.status(StatusCodes.CREATED);
