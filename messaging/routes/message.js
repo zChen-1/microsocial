@@ -167,13 +167,22 @@ router.delete("/message/:del_message_id", (req, res) => {
 router.put("/message/:message_id", (req, res) => {
 
   let messageId = req.params.message_id.trim();
+  let author = req.body.author;
   let content = req.body.content;//.trim();
   content = bleach.sanitize(content);
-  //TODO: should check for valid author as well
+  
   let message={content:NaN}
   let getstmt = db.prepare(`SELECT id, thread, author, timestamp, content FROM messages where id = ?`);
   message=getstmt.all([messageId])[0];
-  message.content = msgContent;
+
+  if(message.author != author) {
+    console.log("No Author")
+    res.statusMessage="No Author entered"
+    res.status(StatusCodes.EXPECTATION_FAILED).end()
+    return;
+  }
+
+  message.content = content;
   let current_time = Date.now();
   message.lastedit = current_time;
 
@@ -185,7 +194,7 @@ router.put("/message/:message_id", (req, res) => {
   } catch (err) {
     //TODO: error event here
     console.log("insert error: ", { err, info, message });
-    res.status(StatusCodes.INTERNAL_SERVER_ERROR).end();
+    res.status(StatusCodes.UNAUTHORIZED).end();
     return;
   }
 
