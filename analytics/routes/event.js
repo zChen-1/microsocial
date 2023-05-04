@@ -27,15 +27,21 @@ const { validate } = require("../utils/schema-validation");
  *         name: id
  *         description: event id
  *         required: true
- *         schema:
- *            $ref: '#/components/schemas/EventId'
  *     responses:
  *       200:
  *         description: Event Data
  *         content:
  *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/RetrievedEvent'
+ *             example:
+ *               {
+ *                 "id": 1,
+ *                 "type": "user_creation",
+ *                 "message": "user has been created",
+ *                 "severity": "high",
+ *                 "time": "12:34",
+ *                 "uri": "/event/1"
+ *               }
+ *             
  *       404:
  *         description: No such Event
  *         examples: [ "Not Found", "No such event" ]
@@ -43,13 +49,13 @@ const { validate } = require("../utils/schema-validation");
 router.get("/event/:id", (req, res) => {
   const id = parseInt(req.params.id);
 
-  errors = validate.EventId(id, "{id}");
-  if (errors.length) {
-    res.json(errors);
-    res.statusMessage = "No such event";
-    res.status(StatusCodes.NOT_FOUND).end();
-    return;
-  }
+  // errors = validate.EventId(id, "{id}");
+  // if (errors.length) {
+  //   res.json(errors);
+  //   res.statusMessage = "No such event";
+  //   res.status(StatusCodes.NOT_FOUND).end();
+  //   return;
+  // }
 
   const stmt = db.prepare("SELECT id, type, message, severity, time FROM events where id = ?");
   events = stmt.all([id]);
@@ -102,28 +108,28 @@ router.get("/event/:id", (req, res) => {
 router.put("/event/:id", (req, res) => {
   const id = parseInt(req.params.id);
 
-  errors = validate.EventId(id, "{id}");
-  if (errors.length) {
-    res.json(errors);
-    res.statusMessage = "No such event";
-    res.status(StatusCodes.NOT_FOUND).end();
-    return;
-  }
+  // errors = validate.EventId(id, "{id}");
+  // if (errors.length) {
+  //   res.json(errors);
+  //   res.statusMessage = "No such event";
+  //   res.status(StatusCodes.NOT_FOUND).end();
+  //   return;
+  // }
 
   const updatedEvent = req.body;
 
-  errors = validate.UpdatingEvent(updatedEvent, "{body}");
-  if (errors.length) {
-    res.json(errors);
-    res.statusMessage = "Invalid update";
-    res.status(StatusCodes.UNPROCESSABLE_ENTITY).end();
-    return;
-  }
+  // errors = validate.UpdatingEvent(updatedEvent, "{body}");
+  // if (errors.length) {
+  //   res.json(errors);
+  //   res.statusMessage = "Invalid update";
+  //   res.status(StatusCodes.UNPROCESSABLE_ENTITY).end();
+  //   return;
+  // }
 
   const stmt = db.prepare(`UPDATE events SET type=?, message=?, severity=?, time=? WHERE id=?`);
 
   try {
-    info = stmt.run([updatedEvent.name, updatedEvent.password, id]);
+    info = stmt.run([updatedEvent.type, updatedEvent.message, updatedEvent.severity, updatedEvent.time, id]);
     if (info.changes < 1) {
       console.log("update error1: ", { err, info, event });
       res.statusMessage = "Account update failed.";
@@ -181,23 +187,23 @@ router.put("/event/:id", (req, res) => {
 router.patch("/event/:id", (req, res) => {
   const id = parseInt(req.params.id);
 
-  errors = validate.EventId(id, "{id}");
-  if (errors.length) {
-    res.json(errors);
-    res.statusMessage = "No such event";
-    res.status(StatusCodes.NOT_FOUND).end();
-    return;
-  }
+  // errors = validate.EventId(id, "{id}");
+  // if (errors.length) {
+  //   res.json(errors);
+  //   res.statusMessage = "No such event";
+  //   res.status(StatusCodes.NOT_FOUND).end();
+  //   return;
+  // }
 
   const updatedEvent = req.body;
 
-  errors = validate.PatchingEvent(updatedEvent, "{body}");
-  if (errors.length) {
-    res.json(errors);
-    res.statusMessage = "Invalid update";
-    res.status(StatusCodes.UNPROCESSABLE_ENTITY).end();
-    return;
-  }
+  // errors = validate.PatchingEvent(updatedEvent, "{body}");
+  // if (errors.length) {
+  //   res.json(errors);
+  //   res.statusMessage = "Invalid update";
+  //   res.status(StatusCodes.UNPROCESSABLE_ENTITY).end();
+  //   return;
+  // }
 
   var info;
   try {
@@ -206,22 +212,22 @@ router.patch("/event/:id", (req, res) => {
 
     if ("type" in updatedEvent) {
       updateClauses.push("type = ?");
-      updateParams.push(updatedEvent.name);
+      updateParams.push(updatedEvent.type);
     }
 
     if ("message" in updatedEvent) {
       updateClauses.push("message = ?");
-      updateParams.push(updatedEvent.password);
+      updateParams.push(updatedEvent.message);
     }
 
     if ("severity" in updatedEvent) {
       updateClauses.push("severity = ?");
-      updateParams.push(updatedEvent.password);
+      updateParams.push(updatedEvent.severity);
     }
 
     if ("time" in updatedEvent) {
       updateClauses.push("time = ?");
-      updateParams.push(updatedEvent.password);
+      updateParams.push(updatedEvent.time);
     }
 
     const stmt = db.prepare(
@@ -274,13 +280,13 @@ router.patch("/event/:id", (req, res) => {
 router.delete("/event/:id", (req, res) => {
   const id = parseInt(req.params.id);
 
-  errors = validate.EventId(id, "{id}");
-  if (errors.length) {
-    res.json(errors);
-    res.statusMessage = "No such event";
-    res.status(StatusCodes.NOT_FOUND).end();
-    return;
-  }
+  // errors = validate.EventId(id, "{id}");
+  // if (errors.length) {
+  //   res.json(errors);
+  //   res.statusMessage = "No such event";
+  //   res.status(StatusCodes.NOT_FOUND).end();
+  //   return;
+  // }
 
   const stmt = db.prepare("DELETE FROM events where id = ?");
 
