@@ -50,7 +50,11 @@ router.get("/threads/:user_id", (req, res) => {
   threads = stmt.all([id,id]);
 
   if (threads.length < 1) {
-    //TODO: error event here
+    createEvent(
+      type="Messages => PostNewThread",
+      severity="info",
+      message=`Get threads userId=${id} returned 0 results`
+    )
     res.statusMessage = "No threads found";
     res.status(StatusCodes.NOT_FOUND).end();
     return;
@@ -65,6 +69,7 @@ router.get("/threads/:user_id", (req, res) => {
    * Orangize result into {[other thread participant uris]:[messages/thread_id for those users]}
    */
   let conversations={};
+  let convI=0;
   for(convIndex in threads){
     let element=threads[convIndex]
     let convHead=JSON.stringify(not_me(id,element.user_a,element.user_b))
@@ -74,12 +79,13 @@ router.get("/threads/:user_id", (req, res) => {
     else{
       conversations[convHead]=[`/messages/${element.id}`]
     }
+    convI+=1;
   }
   res.json(conversations);
   createEvent(
       type="Messages => GetThreadsByID",
       severity="info",
-      message=`Fetched threads userId="${id}"`
+      message=`Fetched threads userId="${id}", total conversations: ${convI} with ${conversations.length} groups`
   )
 });
 
@@ -126,9 +132,14 @@ router.post("/threads", (req, res) => {
   }
   if(users.length!=2){
       //TODO: error event here
-      console.log("users length !=2 ",users.length)
+      let eventStatus=StatusCodes.BAD_REQUEST
+      createEvent(
+        type="Messages => PostNewThread",
+        severity="medium",
+        message=`Invalid users value in PostNewThread, returning ${eventStatus}`
+      )
       res.statusMessage = "incompatible number of users";
-      res.status(StatusCodes.BAD_REQUEST).end();
+      res.status(eventStatus).end();
       return;
   }
   let user_a = users[0];
@@ -161,12 +172,11 @@ router.post("/threads", (req, res) => {
   try {
      info = stmt.run([user_a, user_b]);
   } catch (err) {
-    if (err.code === "SQLITE_CONSTRAINT_UNIQUE") {
-      res.statusMessage = "Thread already exists";
-      res.status(StatusCodes.BAD_REQUEST).end();
-      return;
-    }
-    //TODO: error event here
+    createEvent(
+      type="Messages => PostNewThread",
+      severity="high",
+      message=`Insert error in PostNewThread: ${err}`
+    )
     console.log("insert error: ", { err, info, user });
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).end();
     return;
