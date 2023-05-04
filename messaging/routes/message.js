@@ -53,6 +53,40 @@ router.get("/message/:id", (req, res) => {
 
   if (message.length < 1) {
     //TODO: error event here
+  // Define a custom exception class
+  class MessagingAPIError extends Error {}
+
+  // Define a helper function to create an event object
+  function createEvent(eventType, message) {
+    return {
+      type: eventType,
+      message: message
+    };
+  }
+
+  // Define a function to send a message
+  function sendMessage(message) {
+    if (!message) {
+      // If the message is empty, throw a MessagingAPIError and create an error event
+      const errorEvent = createEvent('error', 'Cannot send an empty message');
+      throw new MessagingAPIError(errorEvent.message);
+    }
+
+    // Otherwise, send the message and create a success event
+    const successEvent = createEvent('success', message);
+    console.log(`Message sent: ${message}`);
+  }
+
+  // Call the sendMessage function and handle any errors
+  try {
+    sendMessage('Hello, world!');
+    sendMessage('');
+  } catch (e) {
+    // If a MessagingAPIError is thrown, handle the error and log the error event
+    const errorEvent = createEvent('error', e.message);
+    console.log(errorEvent);
+  }
+
     res.statusMessage = "No such message";
     res.status(StatusCodes.NOT_FOUND).end();
     return;
