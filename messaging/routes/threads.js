@@ -124,7 +124,7 @@ router.get("/threads/:user_id", (req, res) => {
  */
 router.post("/threads", (req, res) => {
   let thread={};
-  let users=req.body.users;
+  let users=req.body.userGroup;
 
   //TODO: Postman sends as string, but /docs sends as object, quick patch, needs attention.
   if(typeof users===typeof ""){
