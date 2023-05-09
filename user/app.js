@@ -4,6 +4,7 @@ const cookieParser = require("cookie-parser");
 const helmet = require("helmet");
 const fs = require('fs');
 const path = require('path');
+const xmlparser = require('express-xml-bodyparser');
 
 const { StatusCodes } = require('http-status-codes');
 
@@ -15,6 +16,7 @@ app.set("title", `Microsocial ${MY_SERVICE_NAME} API`);
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb',extended: true }));
 app.use(cookieParser())
+app.use(xmlparser({ explicitArray: false }))
 app.use(helmet())
 
 
@@ -25,7 +27,7 @@ app.use((err, req, res, next) => {
     //console.error(err);
     return res.status(StatusCodes.BAD_REQUEST).send({ status: StatusCodes.BAD_REQUEST, message: err.message });
   }
-  next();
+  next(); 
 });
 
 // include all routes from the routes/ dir: all js files.

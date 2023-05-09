@@ -572,7 +572,12 @@ router.get('/users', async (req, res) => {
  *                "User with that name already exists" ]
  */
 router.post('/users', (req, res) => {
-  const user = req.body
+  user = req.body
+
+  // XML adds an outer wrapper
+  while ( 'user' in user ) {
+    user = user.user;
+  }
 
   errors = validate.CreatingUser(user, '{body}')
   if (errors.length) {
